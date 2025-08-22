@@ -1,0 +1,316 @@
+{
+  "name": "ElevenLabs Agent Webhook Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "elevenlabs-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook_receiver",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"action\"]}}",
+              "operation": "equals",
+              "value2": "check_availability"
+            }
+          ]
+        }
+      },
+      "id": "route_action",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "find",
+        "collection": "appointments",
+        "query": "={{JSON.stringify({date: $json[\"date\"], status: \"available\"})}}",
+        "options": {
+          "limit": 10,
+          "sort": {
+            "time": 1
+          }
+        }
+      },
+      "id": "check_availability",
+      "name": "Check Availability",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "response",
+              "value": "={{$json[\"available_slots\"].length > 0 ? \"We have \" + $json[\"available_slots\"].length + \" slots available\" : \"No slots available for that date\"}}"
+            }
+          ],
+          "boolean": [
+            {
+              "name": "success",
+              "value": "={{$json[\"available_slots\"].length > 0}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format_response",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "bookings",
+        "fields": "={{JSON.stringify($json)}}"
+      },
+      "id": "create_booking",
+      "name": "Create Booking",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [650, 400]
+    },
+    {
+      "parameters": {
+        "fromEmail": "bookings@company.com",
+        "toEmail": "={{$json[\"customer_email\"]}}",
+        "subject": "Booking Confirmation",
+        "text": "Your appointment has been scheduled for {{$json[\"date\"]}} at {{$json[\"time\"]}}",
+        "options": {}
+      },
+      "id": "send_confirmation",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "webhook_response",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log the incoming webhook for debugging\nconsole.log('Webhook received:', JSON.stringify($input.all()));\n\n// Validate required parameters\nconst action = $input.first().json.action;\nconst params = $input.first().json.parameters || {};\n\nif (!action) {\n  throw new Error('Action is required');\n}\n\n// Add timestamp\nparams.timestamp = new Date().toISOString();\nparams.webhook_id = Math.random().toString(36).substring(7);\n\nreturn [{\n  json: {\n    action: action,\n    ...params\n  }\n}];"
+      },
+      "id": "process_webhook",
+      "name": "Process Webhook Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [350, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.calendly.com/scheduling_links",
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "credentials": {
+            "name": "Calendly API",
+            "value": "Bearer YOUR_API_KEY"
+          }
+        },
+        "options": {
+          "bodyContentType": "json"
+        },
+        "bodyParametersJson": "={{JSON.stringify({max_event_count: 1, owner: \"YOUR_CALENDLY_USER_URI\"})}}"
+      },
+      "id": "external_calendar",
+      "name": "Check External Calendar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "content": "## ElevenLabs Webhook Handler\n\n### Supported Actions:\n1. **check_availability** - Check appointment slots\n2. **create_booking** - Create new booking\n3. **send_notification** - Send notifications\n4. **update_crm** - Update CRM records\n\n### Setup:\n1. Configure webhook URL in ElevenLabs\n2. Set up database connections\n3. Configure email/SMS providers\n4. Add authentication tokens",
+        "height": 242.5,
+        "width": 386.5
+      },
+      "id": "documentation",
+      "name": "Documentation",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [100, 100]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "health_check",
+      "name": "Health Check Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 500]
+    },
+    {
+      "parameters": {
+        "url": "https://api.elevenlabs.io/v1/user",
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "credentials": {
+            "name": "ElevenLabs API",
+            "value": "YOUR_API_KEY"
+          }
+        },
+        "options": {}
+      },
+      "id": "verify_api",
+      "name": "Verify ElevenLabs API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 500]
+    }
+  ],
+  "connections": {
+    "webhook_receiver": {
+      "main": [
+        [
+          {
+            "node": "process_webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "process_webhook": {
+      "main": [
+        [
+          {
+            "node": "route_action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "route_action": {
+      "main": [
+        [
+          {
+            "node": "check_availability",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "create_booking",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "external_calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_availability": {
+      "main": [
+        [
+          {
+            "node": "format_response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "format_response": {
+      "main": [
+        [
+          {
+            "node": "webhook_response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_booking": {
+      "main": [
+        [
+          {
+            "node": "send_confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_confirmation": {
+      "main": [
+        [
+          {
+            "node": "webhook_response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "health_check": {
+      "main": [
+        [
+          {
+            "node": "verify_api",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateId": "elevenlabs-webhook-handler"
+  },
+  "pinData": {},
+  "versionId": "1.0.0",
+  "triggerCount": 2
+}

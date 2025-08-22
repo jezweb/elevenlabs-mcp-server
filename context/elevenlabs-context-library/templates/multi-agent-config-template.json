@@ -1,0 +1,264 @@
+{
+  "multi_agent_system": {
+    "name": "Customer Service System",
+    "description": "Multi-agent architecture for comprehensive customer service",
+    "version": "1.0",
+    
+    "agents": [
+      {
+        "id": "main_router",
+        "name": "Main Router",
+        "type": "router",
+        "model": "gemini-2.5-flash-lite",
+        "temperature": 0.25,
+        "max_tokens": 150,
+        "enable_first_message": true,
+        "first_message": "Hello! Welcome to [Company]. How can I direct your call today?",
+        "voice": {
+          "voice_id": "professional_voice_id",
+          "stability": 0.6,
+          "similarity_boost": 0.8
+        },
+        "transfers": [
+          {
+            "target": "booking_agent",
+            "condition": "User wants to book, schedule, make appointment, needs service",
+            "message": "I'll connect you with our booking specialist..."
+          },
+          {
+            "target": "info_agent",
+            "condition": "Questions about services, prices, information, details",
+            "message": "Let me transfer you to our information specialist..."
+          },
+          {
+            "target": "tech_expert",
+            "condition": "Technical question, complex issue, why does, how does",
+            "message": "I'll connect you with our technical expert..."
+          },
+          {
+            "target": "emergency_human",
+            "condition": "Emergency, urgent, danger, flood, fire, gas leak",
+            "message": "This requires immediate attention. Connecting you now..."
+          }
+        ]
+      },
+      
+      {
+        "id": "booking_agent",
+        "name": "Booking Specialist",
+        "type": "data_collection",
+        "model": "gemini-2.5-flash",
+        "temperature": 0.45,
+        "max_tokens": 250,
+        "enable_first_message": true,
+        "first_message": "I'll help you schedule your appointment. Let me collect some information...",
+        "voice": {
+          "voice_id": "friendly_voice_id",
+          "stability": 0.5,
+          "similarity_boost": 0.8
+        },
+        "data_collection": [
+          {
+            "field": "customer_name",
+            "type": "string",
+            "required": true,
+            "prompt": "May I have your full name please?"
+          },
+          {
+            "field": "phone_number",
+            "type": "string",
+            "required": true,
+            "prompt": "What's the best phone number to reach you?"
+          },
+          {
+            "field": "service_address",
+            "type": "string",
+            "required": true,
+            "prompt": "What's the complete service address?"
+          },
+          {
+            "field": "issue_description",
+            "type": "string",
+            "required": true,
+            "prompt": "Can you describe what you need help with?"
+          },
+          {
+            "field": "preferred_time",
+            "type": "string",
+            "required": false,
+            "prompt": "When would work best for you?"
+          }
+        ],
+        "confirmation": {
+          "enabled": true,
+          "message": "Let me confirm your details..."
+        }
+      },
+      
+      {
+        "id": "info_agent",
+        "name": "Information Specialist",
+        "type": "knowledge",
+        "model": "gemini-2.5-flash",
+        "temperature": 0.35,
+        "max_tokens": 300,
+        "enable_first_message": true,
+        "first_message": "I can help you with information about our services. What would you like to know?",
+        "voice": {
+          "voice_id": "informative_voice_id",
+          "stability": 0.55,
+          "similarity_boost": 0.8
+        },
+        "knowledge_base": {
+          "enabled": true,
+          "use_rag": true,
+          "search_threshold": 0.7,
+          "files": [
+            "services.txt",
+            "pricing.txt",
+            "faq.txt",
+            "policies.txt"
+          ]
+        },
+        "transfers": [
+          {
+            "target": "booking_agent",
+            "condition": "User ready to book or schedule",
+            "message": "I'll transfer you to booking to schedule that..."
+          }
+        ]
+      },
+      
+      {
+        "id": "tech_expert",
+        "name": "Technical Expert",
+        "type": "technical",
+        "model": "gemini-2.5-pro",
+        "temperature": 0.25,
+        "max_tokens": 400,
+        "enable_first_message": true,
+        "first_message": "I'm here to help with technical questions. What would you like to understand?",
+        "voice": {
+          "voice_id": "expert_voice_id",
+          "stability": 0.6,
+          "similarity_boost": 0.85
+        },
+        "knowledge_base": {
+          "enabled": true,
+          "use_rag": true,
+          "search_threshold": 0.8,
+          "files": [
+            "technical_manual.txt",
+            "standards.txt",
+            "troubleshooting.txt"
+          ]
+        }
+      }
+    ],
+    
+    "global_settings": {
+      "audio": {
+        "input_format": "pcm_16000",
+        "output_format": "mp3_44100_128",
+        "optimize_streaming_latency": 3,
+        "echo_cancellation": true,
+        "noise_suppression": true
+      },
+      "conversation": {
+        "turn_timeout": 60,
+        "silence_end_call_timeout": -1,
+        "max_duration": 600
+      },
+      "privacy": {
+        "store_audio": true,
+        "store_transcripts": true,
+        "retention_days": 730,
+        "anonymize_pii": true
+      },
+      "client_events": {
+        "audio": true,
+        "interruption": true,
+        "user_transcript": true,
+        "agent_response": true,
+        "agent_tool_response": true
+      }
+    },
+    
+    "webhooks": [
+      {
+        "name": "check_availability",
+        "url": "https://api.company.com/webhooks/availability",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer ${API_KEY}"
+        }
+      },
+      {
+        "name": "create_booking",
+        "url": "https://api.company.com/webhooks/booking",
+        "method": "POST"
+      }
+    ],
+    
+    "evaluation_criteria": [
+      {
+        "agent": "main_router",
+        "criteria": [
+          {
+            "name": "Correct Routing",
+            "weight": 0.4
+          },
+          {
+            "name": "Speed of Routing",
+            "weight": 0.3
+          },
+          {
+            "name": "Emergency Detection",
+            "weight": 0.3
+          }
+        ]
+      },
+      {
+        "agent": "booking_agent",
+        "criteria": [
+          {
+            "name": "Data Completeness",
+            "weight": 0.4
+          },
+          {
+            "name": "Customer Experience",
+            "weight": 0.3
+          },
+          {
+            "name": "Accuracy",
+            "weight": 0.3
+          }
+        ]
+      }
+    ],
+    
+    "testing": {
+      "test_phone_numbers": [
+        "+1234567890"
+      ],
+      "test_scenarios": [
+        {
+          "name": "Booking Flow",
+          "steps": [
+            "Say: I need to book an appointment",
+            "Expect: Transfer to booking",
+            "Provide: Test data",
+            "Expect: Confirmation"
+          ]
+        },
+        {
+          "name": "Emergency Detection",
+          "steps": [
+            "Say: I have a flood emergency",
+            "Expect: Immediate transfer to human"
+          ]
+        }
+      ]
+    }
+  }
+}
