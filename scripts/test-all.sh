@@ -19,11 +19,6 @@ NC='\033[0m' # No Color
 # Track overall success
 ALL_PASSED=true
 
-# Copy shared utilities first
-echo "📦 Updating shared utilities..."
-"$SCRIPT_DIR/copy-shared.sh"
-echo ""
-
 # Server directories
 SERVERS=("elevenlabs-agents" "elevenlabs-knowledge")
 

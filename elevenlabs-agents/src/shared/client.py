@@ -180,9 +180,27 @@ class ElevenLabsClient:
         return await self._request("GET", f"/convai/conversations/{conversation_id}", use_cache=True)
     
     async def get_transcript(self, conversation_id: str) -> str:
-        """Get conversation transcript."""
-        response = await self._request("GET", f"/convai/conversations/{conversation_id}/transcript")
-        return response.get("transcript", "")
+        """Get conversation transcript from the main conversation endpoint.
+        
+        Note: The dedicated /transcript endpoint has been deprecated.
+        Transcript data is now included in the main conversation response.
+        """
+        conversation = await self._request("GET", f"/convai/conversations/{conversation_id}", use_cache=True)
+        
+        # Extract transcript from conversation data
+        transcript_data = conversation.get("transcript", [])
+        if isinstance(transcript_data, list):
+            # Format transcript from message list
+            lines = []
+            for message in transcript_data:
+                role = message.get("role", "unknown")
+                content = message.get("message", "")
+                lines.append(f"{role}: {content}")
+            return "\n".join(lines)
+        elif isinstance(transcript_data, str):
+            return transcript_data
+        else:
+            return ""
     
     # Utility Methods
     

@@ -34,9 +34,6 @@ pip install -r requirements.txt
 Run servers locally for testing:
 
 ```bash
-# Copy shared utilities to servers
-./scripts/copy-shared.sh
-
 # Run agents server
 cd elevenlabs-agents
 python src/server.py

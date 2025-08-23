@@ -154,8 +154,8 @@ async def get_agent(agent_id: str) -> Dict[str, Any]:
     Returns:
         Complete agent configuration and metadata
     """
-    if not validate_uuid(agent_id):
-        return format_error("Invalid agent ID format", suggestion="Provide a valid UUID")
+    if not validate_elevenlabs_id(agent_id, 'agent'):
+        return format_error("Invalid agent ID format", suggestion="Provide a valid agent ID (e.g., agent_XXXX or UUID)")
     
     try:
         agent = await client.get_agent(agent_id)
@@ -389,8 +389,8 @@ async def add_transfer_to_agent(
     Returns:
         Transfer configuration result
     """
-    if not validate_uuid(from_agent_id) or not validate_uuid(to_agent_id):
-        return format_error("Invalid agent ID format")
+    if not validate_elevenlabs_id(from_agent_id, 'agent') or not validate_elevenlabs_id(to_agent_id, 'agent'):
+        return format_error("Invalid agent ID format", suggestion="Provide valid agent IDs (e.g., agent_XXXX or UUID)")
     
     try:
         tool_config = {

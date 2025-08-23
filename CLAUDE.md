@@ -32,8 +32,8 @@ This is a monorepo containing two FastMCP servers for ElevenLabs Conversational 
    git+https://github.com/...
    ```
 
-3. **Embedded Shared Code**
-   - Always run `./scripts/copy-shared.sh` before deployment
+3. **Self-Contained Servers**
+   - Each server has its own copy of shared utilities in `src/shared/`
    - Never use symlinks or local package references
    - Each server must be self-contained
 
@@ -41,12 +41,7 @@ This is a monorepo containing two FastMCP servers for ElevenLabs Conversational 
 
 ### Setting Up
 
-1. **Copy shared utilities**:
-   ```bash
-   ./scripts/copy-shared.sh
-   ```
-
-2. **Install dependencies**:
+1. **Install dependencies**:
    ```bash
    cd elevenlabs-agents
    pip install -r requirements.txt
@@ -60,10 +55,9 @@ This is a monorepo containing two FastMCP servers for ElevenLabs Conversational 
 
 ### Making Changes
 
-1. **Modify shared code**: Edit files in `shared/`
-2. **Copy to servers**: Run `./scripts/copy-shared.sh`
-3. **Test locally**: `python src/server.py`
-4. **Validate**: Run `./scripts/deploy-check.sh`
+1. **Modify code**: Edit files directly in each server's `src/shared/` directory
+2. **Test locally**: `python src/server.py`
+3. **Validate**: Run `./scripts/deploy-check.sh`
 
 ### Adding New Tools
 
@@ -206,8 +200,8 @@ refactor(shared): simplify client initialization
    - Check variable name is `mcp`, `server`, or `app`
 
 2. **"Module not found"**
-   - Run `./scripts/copy-shared.sh`
    - Check import paths
+   - Verify shared files exist in `src/shared/`
 
 3. **"API connection failed"**
    - Verify ELEVENLABS_API_KEY is set
