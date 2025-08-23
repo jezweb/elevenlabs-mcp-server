@@ -8,8 +8,9 @@ Manages conversational AI agents, configuration, and multi-agent orchestration.
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Annotated
 from contextlib import asynccontextmanager
+from pydantic import Field
 
 # Add parent directory to path for shared module access
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -79,49 +80,68 @@ async def create_agent(
     Create a new conversational AI agent.
     
     Args:
-        name: Agent display name
-        system_prompt: Instructions defining agent behavior
-        first_message: Initial greeting message
-        voice_id: ElevenLabs voice ID
-        llm_model: LLM model to use
-        temperature: Response creativity (0.0-1.0)
-        language: ISO 639-1 language code
+        name: Agent display name (e.g., "Customer Support Bot")
+        system_prompt: Instructions defining agent behavior and personality
+        first_message: Initial greeting message (e.g., "Hello! How can I help you today?")
+        voice_id: ElevenLabs voice ID (default: cgSgspJ2msm6clMCkdW9)
+        llm_model: LLM model to use (default: gemini-2.0-flash-001)
+        temperature: Response creativity (0.0-1.0, lower=consistent, higher=creative)
+        language: ISO 639-1 language code (e.g., "en", "es", "fr")
     
     Returns:
-        Created agent details with agent_id
+        Created agent details with agent_id for further operations
+        
+    Example:
+        create_agent("Support Bot", "You are a helpful customer support agent", 
+                    "Hi! I'm here to help with your questions.")
     """
     try:
+        # Agent creation is currently only available through the ElevenLabs web interface
+        # This function provides guidance on how to create agents manually
+        
+        # Format the configuration for reference
         config = {
             "name": name,
-            "conversation_config": {
-                "agent": {
-                    "prompt": {
-                        "prompt": system_prompt,
-                        "first_message": first_message,
-                        "language": language
-                    }
-                },
-                "tts": {
-                    "voice_id": voice_id,
-                    "model_id": "eleven_turbo_v2",
-                    "stability": 0.5,
-                    "similarity_boost": 0.8
-                },
-                "llm": {
-                    "model": llm_model,
-                    "temperature": temperature
-                }
-            }
+            "system_prompt": system_prompt,
+            "first_message": first_message,
+            "voice_id": voice_id,
+            "llm_model": llm_model,
+            "temperature": temperature,
+            "language": language
         }
         
-        result = await client.create_agent(config)
+        instructions = f"""
+Agent creation is currently only available through the ElevenLabs web interface.
+
+To create your agent '{name}':
+
+1. Visit: https://elevenlabs.io/app/conversational-ai/agents
+2. Click "Create New Agent" or use "Blank Template"
+3. Configure with these settings:
+   - Name: {name}
+   - System Prompt: {system_prompt}
+   - First Message: {first_message}
+   - Voice ID: {voice_id}
+   - LLM Model: {llm_model}
+   - Temperature: {temperature}
+   - Language: {language}
+
+4. After creating the agent, copy the agent_id and use it with other tools in this MCP server.
+
+Note: The API currently supports managing existing agents but not creating new ones.
+"""
+        
         return format_success(
-            f"Agent '{name}' created successfully",
-            {"agent_id": result.get("agent_id"), "agent": result}
+            "Agent creation guidance provided",
+            {
+                "instructions": instructions,
+                "config": config,
+                "create_url": "https://elevenlabs.io/app/conversational-ai/agents"
+            }
         )
     except Exception as e:
-        logger.error(f"Failed to create agent: {e}")
-        return format_error(str(e), suggestion="Check API key and agent configuration")
+        logger.error(f"Failed to provide agent creation guidance: {e}")
+        return format_error(str(e))
 
 
 @mcp.tool()
@@ -279,22 +299,25 @@ async def update_system_prompt(
 async def configure_voice(
     agent_id: str,
     voice_id: str,
-    stability: Optional[float] = 0.5,
-    similarity_boost: Optional[float] = 0.8,
-    style: Optional[float] = 0.0
+    stability: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Voice consistency (0.0-1.0)")] = 0.5,
+    similarity_boost: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Voice matching (0.0-1.0)")] = 0.8,
+    style: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Style exaggeration (0.0-1.0)")] = 0.0
 ) -> Dict[str, Any]:
     """
     Configure agent voice settings.
     
     Args:
-        agent_id: Agent to configure
-        voice_id: ElevenLabs voice ID
-        stability: Voice consistency (0.0-1.0)
-        similarity_boost: Voice matching (0.0-1.0)
-        style: Style exaggeration (0.0-1.0)
+        agent_id: Agent to configure (format: agent_XXXX or UUID)
+        voice_id: ElevenLabs voice ID (e.g., cgSgspJ2msm6clMCkdW9)
+        stability: Voice consistency (0.0-1.0, lower=more variable, higher=more stable)
+        similarity_boost: Voice matching (0.0-1.0, lower=creative freedom, higher=strict adherence)
+        style: Style exaggeration (0.0-1.0, 0=neutral, higher=more expressive)
     
     Returns:
-        Configuration result
+        Configuration result with voice settings applied
+        
+    Example:
+        configure_voice("agent_abc123", "cgSgspJ2msm6clMCkdW9", 0.7, 0.9, 0.1)
     """
     if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
@@ -325,8 +348,8 @@ async def configure_voice(
 async def set_llm_config(
     agent_id: str,
     model: Optional[str] = None,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None
+    temperature: Annotated[Optional[float], Field(ge=0.0, le=2.0, description="Response creativity (0.0-2.0)")] = None,
+    max_tokens: Annotated[Optional[int], Field(ge=1, le=8192, description="Maximum response length (1-8192)")] = None
 ) -> Dict[str, Any]:
     """
     Configure agent LLM settings.

@@ -8,9 +8,10 @@ Manages knowledge base, RAG configuration, and conversation analytics.
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Annotated
 import json
 from contextlib import asynccontextmanager
+from pydantic import Field
 
 # Add parent directory to path for shared module access
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -216,23 +217,31 @@ async def delete_document(document_id: str) -> Dict[str, Any]:
 @mcp.tool()
 async def configure_rag(
     agent_id: str,
-    chunk_size: Optional[int] = 512,
-    chunk_overlap: Optional[int] = 50,
-    top_k: Optional[int] = 5,
-    similarity_threshold: Optional[float] = 0.7
+    chunk_size: Annotated[Optional[int], Field(ge=100, le=4000, description="Characters per chunk (100-4000)")] = 512,
+    chunk_overlap: Annotated[Optional[int], Field(ge=0, le=500, description="Overlap between chunks (0-500)")] = 50,
+    top_k: Annotated[Optional[int], Field(ge=1, le=20, description="Number of results to retrieve (1-20)")] = 5,
+    similarity_threshold: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Minimum relevance score (0.0-1.0)")] = 0.7
 ) -> Dict[str, Any]:
     """
     Configure RAG settings for an agent.
     
     Args:
-        agent_id: Agent to configure
-        chunk_size: Characters per chunk (100-4000)
-        chunk_overlap: Overlap between chunks (0-500)
-        top_k: Number of results to retrieve (1-20)
-        similarity_threshold: Minimum relevance score (0.0-1.0)
+        agent_id: Agent to configure (format: agent_XXXX or UUID)
+        chunk_size: Characters per chunk (100-4000, recommended: 512-1024)
+        chunk_overlap: Overlap between chunks (0-500, recommended: 10-20% of chunk_size)
+        top_k: Number of results to retrieve (1-20, recommended: 3-7 for balanced relevance)
+        similarity_threshold: Minimum relevance score (0.0-1.0, recommended: 0.7+ for accuracy)
     
     Returns:
-        Configuration result
+        Configuration result with RAG settings applied
+        
+    Example:
+        configure_rag("agent_abc123", chunk_size=1024, chunk_overlap=100, top_k=5, similarity_threshold=0.75)
+        
+    Note:
+        - Larger chunk_size = more context but less precision
+        - Higher top_k = more results but potentially more noise
+        - Higher similarity_threshold = more accurate but potentially fewer results
     """
     if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
@@ -305,8 +314,8 @@ async def rebuild_index(
 @mcp.tool()
 async def list_conversations(
     agent_id: Optional[str] = None,
-    limit: int = 20,
-    offset: int = 0
+    limit: Annotated[int, Field(ge=1, le=100, description="Maximum results (1-100)")] = 20,
+    offset: Annotated[int, Field(ge=0, description="Pagination offset (0 or greater)")] = 0
 ) -> Dict[str, Any]:
     """
     List conversations.
@@ -487,7 +496,7 @@ async def analyze_conversation(conversation_id: str) -> Dict[str, Any]:
 @mcp.tool()
 async def performance_report(
     agent_id: str,
-    days: int = 7
+    days: Annotated[int, Field(ge=1, le=30, description="Number of days to include (1-30)")] = 7
 ) -> Dict[str, Any]:
     """
     Generate performance report for an agent.
@@ -552,8 +561,8 @@ async def performance_report(
 @mcp.tool()
 async def export_conversations(
     agent_id: Optional[str] = None,
-    format: str = "json",
-    limit: int = 100
+    format: Annotated[str, Field(pattern="^(json|csv)$", description="Export format (json or csv)")] = "json",
+    limit: Annotated[int, Field(ge=1, le=1000, description="Maximum conversations to export (1-1000)")] = 100
 ) -> Dict[str, Any]:
     """
     Export conversation data.
