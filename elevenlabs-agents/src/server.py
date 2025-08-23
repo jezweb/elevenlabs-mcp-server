@@ -300,8 +300,8 @@ async def configure_voice(
     agent_id: str,
     voice_id: str,
     stability: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Voice consistency (0.0-1.0)")] = 0.5,
-    similarity_boost: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Voice matching (0.0-1.0)")] = 0.8,
-    style: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Style exaggeration (0.0-1.0)")] = 0.0
+    similarity_boost: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Voice clarity/consistency (0.0-1.0)")] = 0.8,
+    speed: Annotated[Optional[float], Field(ge=0.7, le=1.2, description="Speech rate (0.7-1.2, 1.0=normal)")] = 1.0
 ) -> Dict[str, Any]:
     """
     Configure agent voice settings.
@@ -311,13 +311,13 @@ async def configure_voice(
         voice_id: ElevenLabs voice ID (e.g., cgSgspJ2msm6clMCkdW9)
         stability: Voice consistency (0.0-1.0, lower=more variable, higher=more stable)
         similarity_boost: Voice matching (0.0-1.0, lower=creative freedom, higher=strict adherence)
-        style: Style exaggeration (0.0-1.0, 0=neutral, higher=more expressive)
+        speed: Speech rate (0.7-1.2, 0.7=slower, 1.0=normal, 1.2=faster)
     
     Returns:
         Configuration result with voice settings applied
         
     Example:
-        configure_voice("agent_abc123", "cgSgspJ2msm6clMCkdW9", 0.7, 0.9, 0.1)
+        configure_voice("agent_abc123", "cgSgspJ2msm6clMCkdW9", 0.7, 0.9, 1.0)
     """
     if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
@@ -329,7 +329,7 @@ async def configure_voice(
                     "voice_id": voice_id,
                     "stability": stability,
                     "similarity_boost": similarity_boost,
-                    "style": style
+                    "speed": speed
                 }
             }
         }
