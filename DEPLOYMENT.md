@@ -18,13 +18,7 @@ This guide covers deploying the ElevenLabs MCP servers to FastMCP Cloud.
 
 ## Pre-Deployment Checklist
 
-### 1. Copy Shared Utilities
-```bash
-# CRITICAL: Run this before every deployment
-./scripts/copy-shared.sh
-```
-
-### 2. Test Locally
+### 1. Test Locally
 ```bash
 # Set environment variable
 export ELEVENLABS_API_KEY=your-key-here
@@ -38,7 +32,7 @@ cd elevenlabs-knowledge
 python src/server.py --test
 ```
 
-### 3. Verify Server Objects
+### 2. Verify Server Objects
 ```bash
 # Check that server objects are at module level
 python -c "from elevenlabs_agents.src.server import mcp; print('✅ Agents server OK')"

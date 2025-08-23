@@ -33,9 +33,9 @@ This is a monorepo containing two FastMCP servers for ElevenLabs Conversational 
    ```
 
 3. **Self-Contained Servers**
-   - Each server has its own copy of shared utilities in `src/shared/`
-   - Never use symlinks or local package references
-   - Each server must be self-contained
+   - Each server is completely independent
+   - All utilities are embedded in each server
+   - No cross-server dependencies
 
 ## Development Workflow
 
@@ -47,7 +47,7 @@ This is a monorepo containing two FastMCP servers for ElevenLabs Conversational 
    pip install -r requirements.txt
    ```
 
-3. **Set environment variables**:
+2. **Set environment variables**:
    ```bash
    cp .env.example .env
    # Add your ELEVENLABS_API_KEY
@@ -55,9 +55,9 @@ This is a monorepo containing two FastMCP servers for ElevenLabs Conversational 
 
 ### Making Changes
 
-1. **Modify code**: Edit files directly in each server's `src/shared/` directory
+1. **Edit server code**: Make changes directly in the server directory
 2. **Test locally**: `python src/server.py`
-3. **Validate**: Run `./scripts/deploy-check.sh`
+3. **Verify**: Ensure server runs without errors
 
 ### Adding New Tools
 
@@ -135,7 +135,6 @@ async def get_agent(agent_id: str) -> dict:
 - [ ] Server object at module level
 - [ ] All imports work
 - [ ] requirements.txt has only PyPI packages
-- [ ] Shared code copied to servers
 - [ ] Environment variables documented
 - [ ] Server runs locally
 - [ ] Tools are registered
@@ -201,7 +200,7 @@ refactor(shared): simplify client initialization
 
 2. **"Module not found"**
    - Check import paths
-   - Verify shared files exist in `src/shared/`
+   - Verify all required files exist
 
 3. **"API connection failed"**
    - Verify ELEVENLABS_API_KEY is set

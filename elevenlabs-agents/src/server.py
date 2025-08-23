@@ -6,14 +6,9 @@ Manages conversational AI agents, configuration, and multi-agent orchestration.
 """
 
 import logging
-import sys
-from pathlib import Path
 from typing import Dict, Any, Optional, List, Annotated
 from contextlib import asynccontextmanager
 from pydantic import Field
-
-# Add parent directory to path for shared module access
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastmcp import FastMCP
 from shared import Config, ElevenLabsClient, format_success, format_error, validate_uuid, validate_elevenlabs_id

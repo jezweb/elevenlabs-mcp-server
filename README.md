@@ -85,16 +85,15 @@ Handles knowledge base operations, RAG configuration, and conversation analytics
 
 ## 🏗️ Architecture
 
-This project uses a monorepo structure with shared utilities:
+This project contains two standalone MCP servers:
 
 ```
 elevenlabs-mcp-server/
-├── shared/                 # Shared utilities (development)
 ├── elevenlabs-agents/      # Agent management server
 └── elevenlabs-knowledge/   # Knowledge base server
 ```
 
-Each server is independently deployable to FastMCP Cloud.
+Each server is completely independent and deployable to FastMCP Cloud.
 
 [Architecture details →](./ARCHITECTURE.md)
 

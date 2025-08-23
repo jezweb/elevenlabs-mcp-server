@@ -6,15 +6,10 @@ Manages knowledge base, RAG configuration, and conversation analytics.
 """
 
 import logging
-import sys
-from pathlib import Path
 from typing import Dict, Any, Optional, List, Annotated
 import json
 from contextlib import asynccontextmanager
 from pydantic import Field
-
-# Add parent directory to path for shared module access
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastmcp import FastMCP
 from shared import (

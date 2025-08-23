@@ -33,23 +33,17 @@ This project implements two specialized MCP (Model Context Protocol) servers for
 
 ```
 elevenlabs-mcp-server/
-├── shared/                 # Shared utilities (dev only)
-│   ├── config.py          # Configuration management
-│   ├── client.py          # ElevenLabs API client
-│   ├── models.py          # Data models
-│   └── utils.py           # Common utilities
-│
 ├── elevenlabs-agents/      # Agent management server
 │   ├── src/
 │   │   ├── server.py      # Entry point (module-level mcp)
-│   │   ├── shared/        # Embedded shared code
+│   │   ├── shared/        # Server utilities
 │   │   └── tools/         # Agent-specific tools
 │   └── requirements.txt
 │
 └── elevenlabs-knowledge/   # Knowledge base server
     ├── src/
     │   ├── server.py      # Entry point (module-level mcp)
-    │   ├── shared/        # Embedded shared code
+    │   ├── shared/        # Server utilities
     │   └── tools/         # Knowledge-specific tools
     └── requirements.txt
 ```
