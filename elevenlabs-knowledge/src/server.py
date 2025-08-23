@@ -22,6 +22,7 @@ from shared import (
     format_success, 
     format_error, 
     validate_uuid,
+    validate_elevenlabs_id,
     chunk_text
 )
 
@@ -106,7 +107,7 @@ async def add_document_url(
         }
         
         # Attach to agent if specified
-        if agent_id and validate_uuid(agent_id):
+        if agent_id and validate_elevenlabs_id(agent_id, 'agent'):
             # Note: Would need additional API call to attach to agent
             response_data["attached_to_agent"] = agent_id
         
@@ -146,7 +147,7 @@ async def add_document_text(
             "estimated_chunks": len(text) // 512 + 1
         }
         
-        if agent_id and validate_uuid(agent_id):
+        if agent_id and validate_elevenlabs_id(agent_id, 'agent'):
             response_data["attached_to_agent"] = agent_id
         
         return format_success(
@@ -197,7 +198,7 @@ async def delete_document(document_id: str) -> Dict[str, Any]:
     Returns:
         Deletion confirmation
     """
-    if not validate_uuid(document_id):
+    if not validate_elevenlabs_id(document_id, 'document'):
         return format_error("Invalid document ID format")
     
     try:
@@ -233,7 +234,7 @@ async def configure_rag(
     Returns:
         Configuration result
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
@@ -279,7 +280,7 @@ async def rebuild_index(
     Returns:
         Index rebuild status
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
@@ -351,7 +352,7 @@ async def get_conversation(conversation_id: str) -> Dict[str, Any]:
     Returns:
         Complete conversation details
     """
-    if not validate_uuid(conversation_id):
+    if not validate_elevenlabs_id(conversation_id, 'conversation'):
         return format_error("Invalid conversation ID format")
     
     try:
@@ -376,7 +377,7 @@ async def get_transcript(conversation_id: str) -> Dict[str, Any]:
     Returns:
         Text transcript
     """
-    if not validate_uuid(conversation_id):
+    if not validate_elevenlabs_id(conversation_id, 'conversation'):
         return format_error("Invalid conversation ID format")
     
     try:
@@ -432,7 +433,7 @@ async def analyze_conversation(conversation_id: str) -> Dict[str, Any]:
     Returns:
         Analysis with metrics and insights
     """
-    if not validate_uuid(conversation_id):
+    if not validate_elevenlabs_id(conversation_id, 'conversation'):
         return format_error("Invalid conversation ID format")
     
     try:
@@ -498,7 +499,7 @@ async def performance_report(
     Returns:
         Performance metrics and insights
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     if days < 1 or days > 30:

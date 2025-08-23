@@ -46,6 +46,59 @@ def validate_uuid(value: str) -> bool:
         return False
 
 
+def validate_elevenlabs_id(value: str, id_type: Optional[str] = None) -> bool:
+    """
+    Validate ElevenLabs-specific ID formats.
+    
+    Args:
+        value: The ID string to validate
+        id_type: Optional type hint ('agent', 'conversation', 'document', etc.)
+    
+    Returns:
+        True if the ID matches ElevenLabs format patterns
+    
+    Examples:
+        - Agent ID: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX (agent_ + 30 chars)
+        - Conversation ID: conv_XXXXXXXXXXXXXXXXXXXXXXXXXXXX (conv_ + 29 chars)  
+        - Document ID: alphanumeric string (variable length)
+        - Command ID: command_XXXXXXXXXXXXXXXXXXXXXXXXXX
+    """
+    if not value or not isinstance(value, str):
+        return False
+    
+    # Check for standard UUID first (some IDs might be UUIDs)
+    if validate_uuid(value):
+        return True
+    
+    # ElevenLabs specific patterns
+    patterns = {
+        'agent': r'^agent_[a-zA-Z0-9]{28}$',
+        'conversation': r'^conv_[a-zA-Z0-9]{28}$', 
+        'command': r'^command_[a-zA-Z0-9]{26}$',
+        'document': r'^[a-zA-Z0-9]{16,32}$',  # Variable length alphanumeric
+        'phone': r'^phone_[a-zA-Z0-9]{24}$',
+        'webhook': r'^webhook_[a-zA-Z0-9]{24}$'
+    }
+    
+    import re
+    
+    # If specific type provided, check that pattern
+    if id_type and id_type in patterns:
+        return bool(re.match(patterns[id_type], value))
+    
+    # Otherwise check all patterns
+    for pattern in patterns.values():
+        if re.match(pattern, value):
+            return True
+    
+    # Also accept simple alphanumeric strings of reasonable length
+    # (for document IDs and other resources)
+    if re.match(r'^[a-zA-Z0-9]{8,40}$', value):
+        return True
+    
+    return False
+
+
 def chunk_text(text: str, chunk_size: int = 512, overlap: int = 50) -> List[str]:
     """Split text into overlapping chunks."""
     if not text:

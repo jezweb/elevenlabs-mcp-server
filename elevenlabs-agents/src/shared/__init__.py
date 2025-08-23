@@ -12,8 +12,18 @@ from .utils import (
     format_success,
     format_error,
     validate_uuid,
+    validate_elevenlabs_id,
     chunk_text,
     retry_with_backoff
+)
+from .exceptions import (
+    ElevenLabsError,
+    APIError,
+    ValidationError,
+    AuthenticationError,
+    RateLimitError,
+    ResourceNotFoundError,
+    ConfigurationError
 )
 
 __all__ = [
@@ -33,6 +43,16 @@ __all__ = [
     "format_success",
     "format_error",
     "validate_uuid",
+    "validate_elevenlabs_id",
     "chunk_text",
-    "retry_with_backoff"
+    "retry_with_backoff",
+    
+    # Exceptions
+    "ElevenLabsError",
+    "APIError",
+    "ValidationError",
+    "AuthenticationError",
+    "RateLimitError",
+    "ResourceNotFoundError",
+    "ConfigurationError"
 ]

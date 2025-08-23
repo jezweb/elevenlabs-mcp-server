@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastmcp import FastMCP
-from shared import Config, ElevenLabsClient, format_success, format_error, validate_uuid
+from shared import Config, ElevenLabsClient, format_success, format_error, validate_uuid, validate_elevenlabs_id
 
 # Configure logging
 logging.basicConfig(
@@ -191,7 +191,7 @@ async def update_agent(
     Returns:
         Updated agent details
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
@@ -242,7 +242,7 @@ async def delete_agent(agent_id: str) -> Dict[str, Any]:
     Returns:
         Deletion confirmation
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
@@ -296,7 +296,7 @@ async def configure_voice(
     Returns:
         Configuration result
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
@@ -340,7 +340,7 @@ async def set_llm_config(
     Returns:
         Configuration result
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
@@ -435,7 +435,7 @@ async def simulate_conversation(
     Returns:
         Simulated agent response
     """
-    if not validate_uuid(agent_id):
+    if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
