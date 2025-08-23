@@ -9,6 +9,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
+from contextlib import asynccontextmanager
 
 # Add parent directory to path for shared module access
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -31,14 +32,34 @@ except ValueError as e:
     logger.error(f"Configuration error: {e}")
     sys.exit(1)
 
+# Initialize ElevenLabs client at module level
+client = ElevenLabsClient(Config.API_KEY)
+
+# Define lifespan context manager for startup/shutdown
+@asynccontextmanager
+async def lifespan(app):
+    """Handle server lifecycle events."""
+    # Startup
+    logger.info(f"Starting elevenlabs-agents server")
+    
+    # Test API connection
+    if await client.test_connection():
+        logger.info("ElevenLabs API connection verified")
+    else:
+        logger.warning("Failed to verify API connection - some features may be unavailable")
+    
+    yield  # Server runs here
+    
+    # Shutdown
+    logger.info("Shutting down elevenlabs-agents server")
+    await client.close()
+
 # Initialize FastMCP server - MUST be at module level
 mcp = FastMCP(
     name="elevenlabs-agents",
-    instructions="Manage ElevenLabs conversational AI agents"
+    instructions="Manage ElevenLabs conversational AI agents",
+    lifespan=lifespan
 )
-
-# Initialize ElevenLabs client at module level
-client = ElevenLabsClient(Config.API_KEY)
 
 # ============================================================
 # Agent Management Tools
@@ -431,29 +452,6 @@ async def simulate_conversation(
     except Exception as e:
         logger.error(f"Failed to simulate conversation: {e}")
         return format_error(str(e))
-
-
-# ============================================================
-# Server lifecycle
-# ============================================================
-
-@mcp.on_startup
-async def startup():
-    """Initialize server resources on startup."""
-    logger.info(f"Starting elevenlabs-agents server v0.1.0")
-    
-    # Test API connection
-    if await client.test_connection():
-        logger.info("ElevenLabs API connection verified")
-    else:
-        logger.warning("Failed to verify API connection - some features may be unavailable")
-
-
-@mcp.on_shutdown
-async def shutdown():
-    """Cleanup on server shutdown."""
-    logger.info("Shutting down elevenlabs-agents server")
-    await client.close()
 
 
 # ============================================================
