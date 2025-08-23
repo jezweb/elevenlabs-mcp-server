@@ -34,8 +34,7 @@ except ValueError as e:
 # Initialize FastMCP server - MUST be at module level
 mcp = FastMCP(
     name="elevenlabs-agents",
-    version="0.1.0",
-    description="Manage ElevenLabs conversational AI agents"
+    instructions="Manage ElevenLabs conversational AI agents"
 )
 
 # Initialize ElevenLabs client at module level

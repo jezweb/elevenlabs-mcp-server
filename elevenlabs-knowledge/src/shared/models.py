@@ -2,7 +2,7 @@
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class AgentConfig(BaseModel):
@@ -32,7 +32,8 @@ class AgentConfig(BaseModel):
     turn_timeout: int = Field(7, description="Seconds to wait for response")
     max_duration: int = Field(300, description="Maximum call duration in seconds")
     
-    @validator("language")
+    @field_validator("language")
+    @classmethod
     def validate_language(cls, v):
         """Validate language code."""
         valid_languages = ["en", "es", "fr", "de", "it", "pt", "ja", "ko", "zh"]
@@ -90,7 +91,8 @@ class DocumentData(BaseModel):
     updated_at: Optional[datetime] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
     
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def validate_type(cls, v):
         """Validate document type."""
         valid_types = ["url", "file", "text"]
@@ -126,7 +128,8 @@ class TransferConfig(BaseModel):
     message: Optional[str] = Field(None, description="Transfer announcement message")
     pass_context: bool = Field(True, description="Share conversation history")
     
-    @validator("type")
+    @field_validator("type")
+    @classmethod
     def validate_type(cls, v):
         """Validate transfer type."""
         valid_types = ["agent", "number", "end_call"]
@@ -151,9 +154,10 @@ class RAGConfig(BaseModel):
     rerank_enabled: bool = Field(True)
     hybrid_search: bool = Field(False)
     
-    @validator("chunk_overlap")
-    def validate_overlap(cls, v, values):
+    @field_validator("chunk_overlap")
+    @classmethod
+    def validate_overlap(cls, v, info):
         """Ensure overlap is less than chunk size."""
-        if "chunk_size" in values and v >= values["chunk_size"]:
+        if info.data.get("chunk_size") and v >= info.data["chunk_size"]:
             raise ValueError("Overlap must be less than chunk size")
         return v
