@@ -101,7 +101,7 @@ async def add_document_url(
         - Maximum page size: 10MB
         - Processing timeout: 30 seconds
     
-    API Endpoint: POST /v1/convai/knowledge-base
+    API Endpoint: POST /convai/knowledge-base
     """
     # Validate URL
     if not url:
@@ -220,7 +220,7 @@ async def add_document_text(
         - Chunks have 50 character overlap
         - Long documents automatically split for indexing
     
-    API Endpoint: POST /v1/convai/knowledge-base
+    API Endpoint: POST /convai/knowledge-base
     """
     # Validate inputs
     if not text or not text.strip():
@@ -775,7 +775,7 @@ async def get_knowledge_base_size(agent_id: str) -> Dict[str, Any]:
         )
     
     try:
-        result = await client._request("GET", f"/v1/convai/agent/{agent_id}/knowledge-base/size")
+        result = await client._request("GET", f"/convai/agent/{agent_id}/knowledge-base/size")
         return format_success(
             "Knowledge base statistics retrieved",
             {"statistics": result}

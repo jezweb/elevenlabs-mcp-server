@@ -97,7 +97,7 @@ async def list_tools(
         list_tools(agent_id="agent_abc123")  # Agent-specific tools
         list_tools(tool_type="webhook", limit=100)  # All webhooks
     
-    API Endpoint: GET /v1/convai/tools
+    API Endpoint: GET /convai/tools
     """
     # Validate agent ID if provided
     if agent_id:
@@ -169,7 +169,7 @@ async def get_tool(
     Examples:
         get_tool("tool_abc123")
     
-    API Endpoint: GET /v1/convai/tools/{tool_id}
+    API Endpoint: GET /convai/tools/{tool_id}
     
     Tool Details Include:
         - Name and description
@@ -244,7 +244,7 @@ async def create_tool(
             {"endpoint": "https://api.weather.com", "method": "GET"}
         )
     
-    API Endpoint: POST /v1/convai/tools
+    API Endpoint: POST /convai/tools
     """
     # Validate inputs
     if not name or not name.strip():

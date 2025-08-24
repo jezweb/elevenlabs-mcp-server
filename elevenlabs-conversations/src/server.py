@@ -250,7 +250,7 @@ async def send_feedback(
         4 - Good: Effective interaction, minor issues only
         5 - Excellent: Perfect interaction, exceeded expectations
     
-    API Endpoint: POST /v1/convai/conversations/{conversation_id}/feedback
+    API Endpoint: POST /convai/conversations/{conversation_id}/feedback
     """
     # Validate conversation ID
     if not conversation_id:
@@ -347,7 +347,7 @@ async def get_conversation_audio(
         get_conversation_audio("conv_abc123")  # Default MP3
         get_conversation_audio("conv_xyz789", "wav")  # WAV format
     
-    API Endpoint: GET /v1/convai/conversations/{conversation_id}/audio
+    API Endpoint: GET /convai/conversations/{conversation_id}/audio
     
     Note: URLs expire after ~1 hour. Download promptly or use get_signed_url for longer TTL.
     """
@@ -427,7 +427,7 @@ async def get_signed_url(
         get_signed_url("conv_xyz789", 7200)  # 2 hour TTL
         get_signed_url("conv_def456", 86400)  # 24 hour TTL
     
-    API Endpoint: GET /v1/convai/conversations/{conversation_id}/signed-url
+    API Endpoint: GET /convai/conversations/{conversation_id}/signed-url
     
     Use Cases:
         - Share conversation playback securely
@@ -524,7 +524,7 @@ async def get_conversation_token(
     Examples:
         get_conversation_token("conv_abc123")
     
-    API Endpoint: GET /v1/convai/conversations/{conversation_id}/token
+    API Endpoint: GET /convai/conversations/{conversation_id}/token
     
     Use Cases:
         - Establish websocket connection for real-time conversation

@@ -93,7 +93,7 @@ async def list_tests(
         list_tests("agent_abc123")  # Tests for specific agent
         list_tests(limit=100)  # Get more results
     
-    API Endpoint: GET /v1/convai/tests
+    API Endpoint: GET /convai/tests
     """
     # Validate agent ID if provided
     if agent_id:
@@ -130,7 +130,7 @@ async def list_tests(
         
         result = await client._request(
             "GET",
-            "/v1/convai/agent-testing",
+            "/convai/agent-testing",
             params=params,
             use_cache=True
         )
@@ -163,7 +163,7 @@ async def get_test(
     Examples:
         get_test("test_abc123")
     
-    API Endpoint: GET /v1/convai/tests/{test_id}
+    API Endpoint: GET /convai/tests/{test_id}
     
     Test Configuration Includes:
         - Test metadata (name, description, tags)
@@ -188,7 +188,7 @@ async def get_test(
     try:
         result = await client._request(
             "GET",
-            f"/v1/convai/agent-testing/{test_id}",
+            f"/convai/agent-testing/{test_id}",
             use_cache=True
         )
         
@@ -236,7 +236,7 @@ async def create_test(
             scenarios=[{"input": "Hello", "expected": "greeting"}]
         )
     
-    API Endpoint: POST /v1/convai/tests
+    API Endpoint: POST /convai/tests
     """
     # Validate inputs
     if not name or not name.strip():
@@ -263,7 +263,7 @@ async def create_test(
         
         result = await client._request(
             "POST",
-            "/v1/convai/agent-testing/create",
+            "/convai/agent-testing/create",
             json_data=data
         )
         
@@ -305,7 +305,7 @@ async def update_test(
             scenarios=[{"input": "Hi", "expected": "greeting"}]
         )
     
-    API Endpoint: PUT /v1/convai/tests/{test_id}
+    API Endpoint: PUT /convai/tests/{test_id}
     
     Note: Only provided fields are updated. Omitted fields remain unchanged.
     """
@@ -335,7 +335,7 @@ async def update_test(
         
         result = await client._request(
             "PUT",
-            f"/v1/convai/agent-testing/{test_id}",
+            f"/convai/agent-testing/{test_id}",
             json_data=data
         )
         
@@ -365,7 +365,7 @@ async def delete_test(
     Examples:
         delete_test("test_abc123")
     
-    API Endpoint: DELETE /v1/convai/tests/{test_id}
+    API Endpoint: DELETE /convai/tests/{test_id}
     
     Warning: This action is permanent and cannot be undone.
     """
@@ -385,7 +385,7 @@ async def delete_test(
     try:
         await client._request(
             "DELETE",
-            f"/v1/convai/agent-testing/{test_id}"
+            f"/convai/agent-testing/{test_id}"
         )
         
         return format_success(
@@ -418,7 +418,7 @@ async def get_test_summaries(
         
         result = await client._request(
             "POST",
-            "/v1/convai/agent-testing/summaries",
+            "/convai/agent-testing/summaries",
             json_data={"test_ids": test_ids}
         )
         
@@ -460,7 +460,7 @@ async def run_tests_on_agent(
         run_tests_on_agent("agent_xyz789", test_ids=["test_001", "test_002"])
         run_tests_on_agent("agent_def456", test_type="conversation", parallel=True)
     
-    API Endpoint: POST /v1/convai/agents/{agent_id}/run-tests
+    API Endpoint: POST /convai/agents/{agent_id}/run-tests
     
     Note: Use get_test_invocation() with returned invocation_id to check results.
     """
@@ -491,7 +491,7 @@ async def run_tests_on_agent(
         
         result = await client._request(
             "POST",
-            f"/v1/convai/agents/{agent_id}/run-tests",
+            f"/convai/agents/{agent_id}/run-tests",
             json_data=data
         )
         
@@ -525,7 +525,7 @@ async def get_test_invocation(
     Examples:
         get_test_invocation("inv_abc123")
     
-    API Endpoint: GET /v1/convai/test-invocations/{invocation_id}
+    API Endpoint: GET /convai/test-invocations/{invocation_id}
     
     Results Include:
         - Overall status (running, completed, failed)
@@ -551,7 +551,7 @@ async def get_test_invocation(
     try:
         result = await client._request(
             "GET",
-            f"/v1/convai/test-invocations/{invocation_id}",
+            f"/convai/test-invocations/{invocation_id}",
             use_cache=True
         )
         
@@ -586,7 +586,7 @@ async def resubmit_test(
         
         result = await client._request(
             "POST",
-            f"/v1/convai/test-invocations/{invocation_id}/resubmit",
+            f"/convai/test-invocations/{invocation_id}/resubmit",
             json_data={"retry_failed_only": retry_failed_only}
         )
         
@@ -634,7 +634,7 @@ async def simulate_conversation(
             max_turns=20
         )
     
-    API Endpoint: POST /v1/convai/agents/{agent_id}/simulate-conversation
+    API Endpoint: POST /convai/agents/{agent_id}/simulate-conversation
     
     Use Cases:
         - Test agent responses without real conversations
@@ -702,7 +702,7 @@ async def simulate_conversation(
         
         result = await client._request(
             "POST",
-            f"/v1/convai/agents/{agent_id}/simulate-conversation",
+            f"/convai/agents/{agent_id}/simulate-conversation",
             json_data=data
         )
         

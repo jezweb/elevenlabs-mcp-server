@@ -68,7 +68,7 @@ async def create_agent(
     first_message: str,
     voice_id: Optional[str] = "cgSgspJ2msm6clMCkdW9",
     llm_model: Optional[str] = "gemini-2.0-flash-001",
-    temperature: Optional[float] = 0.5,
+    temperature: Optional[str] = "0.5",
     language: Optional[str] = "en"
 ) -> Dict[str, Any]:
     """
@@ -106,7 +106,7 @@ async def create_agent(
         - gpt-4o-mini (OpenAI, balanced)
         - claude-3-haiku (Anthropic, efficient)
     
-    API Endpoint: POST /v1/convai/agents
+    API Endpoint: POST /convai/agents
     """
     # Input validation
     if not name or not name.strip():
@@ -127,26 +127,20 @@ async def create_agent(
             "Provide a greeting at least 5 characters long"
         )
     
-    # Type coercion for parameters (handle MCP string inputs)
+    # Convert and validate temperature
+    temperature_float = 0.5  # default
     if temperature is not None:
         try:
-            temperature = float(temperature)
+            temperature_float = float(temperature)
         except (ValueError, TypeError):
             return format_error(
                 "Temperature must be a number",
                 "Use a value between 0.0 (deterministic) and 1.0 (creative)"
             )
-    
-    # Validate temperature
-    if temperature is not None:
-        if not isinstance(temperature, (int, float)):
+        
+        if not 0.0 <= temperature_float <= 1.0:
             return format_error(
-                "Temperature must be a number",
-                "Use a value between 0.0 (deterministic) and 1.0 (creative)"
-            )
-        if not 0.0 <= temperature <= 1.0:
-            return format_error(
-                f"Temperature {temperature} out of range",
+                f"Temperature {temperature_float} out of range",
                 "Temperature must be between 0.0 and 1.0"
             )
     
@@ -172,7 +166,7 @@ async def create_agent(
             },
             "llm": {
                 "model": llm_model,
-                "temperature": float(temperature) if temperature is not None else 0.5
+                "temperature": temperature_float
             },
             "language": language
         }
@@ -248,7 +242,7 @@ async def get_agent(agent_id: str) -> Dict[str, Any]:
         - agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX (agent_ + 28 characters)
         - Standard UUID format also accepted
     
-    API Endpoint: GET /v1/convai/agents/{agent_id}
+    API Endpoint: GET /convai/agents/{agent_id}
     """
     if not agent_id:
         return format_error(
@@ -288,7 +282,7 @@ async def update_agent(
     name: Optional[str] = None,
     system_prompt: Optional[str] = None,
     first_message: Optional[str] = None,
-    temperature: Optional[float] = None,
+    temperature: Optional[str] = None,
     voice_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -324,7 +318,19 @@ async def update_agent(
                 conversation_config["agent"]["prompt"]["first_message"] = first_message
         
         if temperature is not None:
-            conversation_config["llm"] = {"temperature": temperature}
+            try:
+                temperature_float = float(temperature)
+                if not 0.0 <= temperature_float <= 1.0:
+                    return format_error(
+                        f"Temperature {temperature_float} out of range",
+                        "Temperature must be between 0.0 and 1.0"
+                    )
+                conversation_config["llm"] = {"temperature": temperature_float}
+            except (ValueError, TypeError):
+                return format_error(
+                    "Temperature must be a number",
+                    "Use a value between 0.0 (deterministic) and 1.0 (creative)"
+                )
         
         if voice_id:
             conversation_config["tts"] = {"voice_id": voice_id}
@@ -438,7 +444,7 @@ async def configure_voice(
             - 1.0: Normal speed (default)
             - 1.1-1.2: Faster, energetic
     
-    API Endpoint: PATCH /v1/convai/agents/{agent_id}
+    API Endpoint: PATCH /convai/agents/{agent_id}
     """
     # Validate agent ID
     if not agent_id:
@@ -538,8 +544,8 @@ async def configure_voice(
 async def set_llm_config(
     agent_id: str,
     model: Optional[str] = None,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None
+    temperature: Optional[str] = None,
+    max_tokens: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Configure agent LLM settings.
@@ -557,19 +563,29 @@ async def set_llm_config(
         return format_error("Invalid agent ID format")
     
     try:
-        # Validate parameters
-        if temperature is not None and (temperature < 0.0 or temperature > 2.0):
-            return format_error("temperature must be between 0.0 and 2.0")
-        if max_tokens is not None and (max_tokens < 1 or max_tokens > 8192):
-            return format_error("max_tokens must be between 1 and 8192")
-        
         llm_config = {}
         if model:
             llm_config["model"] = model
+        
+        # Handle temperature conversion and validation
         if temperature is not None:
-            llm_config["temperature"] = temperature
+            try:
+                temperature_float = float(temperature)
+                if not 0.0 <= temperature_float <= 2.0:
+                    return format_error("temperature must be between 0.0 and 2.0")
+                llm_config["temperature"] = temperature_float
+            except (ValueError, TypeError):
+                return format_error("temperature must be a valid number")
+        
+        # Handle max_tokens conversion and validation
         if max_tokens is not None:
-            llm_config["max_tokens"] = max_tokens
+            try:
+                max_tokens_int = int(max_tokens)
+                if not 1 <= max_tokens_int <= 8192:
+                    return format_error("max_tokens must be between 1 and 8192")
+                llm_config["max_tokens"] = max_tokens_int
+            except (ValueError, TypeError):
+                return format_error("max_tokens must be a valid integer")
         
         if not llm_config:
             return format_error("No LLM settings provided")
@@ -689,7 +705,7 @@ async def get_agent_link(agent_id: str) -> Dict[str, Any]:
         return format_error("Invalid agent ID format")
     
     try:
-        result = await client._request("GET", f"/v1/convai/agents/{agent_id}/link")
+        result = await client._request("GET", f"/convai/agents/{agent_id}/link")
         
         # Check if link is available
         link = result.get("link")
