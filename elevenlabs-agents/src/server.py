@@ -5,6 +5,7 @@ ElevenLabs Agents MCP Server
 Manages conversational AI agents, configuration, and multi-agent orchestration.
 """
 
+import sys
 import logging
 from typing import Dict, Any, Optional, List, Annotated
 from contextlib import asynccontextmanager
@@ -85,58 +86,119 @@ async def create_agent(
     
     Returns:
         Created agent details with agent_id for further operations
-        
-    Example:
+    
+    Examples:
         create_agent("Support Bot", "You are a helpful customer support agent", 
                     "Hi! I'm here to help with your questions.")
-    """
-    try:
-        # Agent creation is currently only available through the ElevenLabs web interface
-        # This function provides guidance on how to create agents manually
         
-        # Format the configuration for reference
-        config = {
-            "name": name,
-            "system_prompt": system_prompt,
-            "first_message": first_message,
-            "voice_id": voice_id,
-            "llm_model": llm_model,
-            "temperature": temperature,
+        create_agent("Sales Assistant", 
+                    "You are a knowledgeable sales assistant for our products",
+                    "Welcome! What product information can I help you with today?",
+                    voice_id="21m00Tcm4TlvDq8ikWAM",  # Rachel voice
+                    temperature=0.7)
+    
+    Common Voice IDs:
+        - cgSgspJ2msm6clMCkdW9: Default professional voice
+        - 21m00Tcm4TlvDq8ikWAM: Rachel (calm, female)
+        - yoZ06aMxZJJ28mfd3POQ: Sam (young, male)
+    
+    Valid LLM Models:
+        - gemini-2.0-flash-001 (default, fast)
+        - gpt-4o-mini (OpenAI, balanced)
+        - claude-3-haiku (Anthropic, efficient)
+    
+    API Endpoint: POST /v1/convai/agents
+    """
+    # Input validation
+    if not name or not name.strip():
+        return format_error(
+            "Agent name cannot be empty",
+            "Provide a descriptive name like 'Customer Support' or 'Sales Assistant'"
+        )
+    
+    if not system_prompt or len(system_prompt) < 10:
+        return format_error(
+            "System prompt too short",
+            "Provide clear instructions at least 10 characters long"
+        )
+    
+    if not first_message or len(first_message) < 5:
+        return format_error(
+            "First message too short", 
+            "Provide a greeting at least 5 characters long"
+        )
+    
+    # Validate temperature
+    if temperature is not None:
+        if not isinstance(temperature, (int, float)):
+            return format_error(
+                "Temperature must be a number",
+                "Use a value between 0.0 (deterministic) and 1.0 (creative)"
+            )
+        if not 0.0 <= temperature <= 1.0:
+            return format_error(
+                f"Temperature {temperature} out of range",
+                "Temperature must be between 0.0 and 1.0"
+            )
+    
+    # Validate language code
+    valid_languages = ["en", "es", "fr", "de", "it", "pt", "pl", "hi", "ja", "ko", "zh"]
+    if language and language not in valid_languages:
+        return format_error(
+            f"Language '{language}' not supported",
+            f"Use one of: {', '.join(valid_languages)}"
+        )
+    
+    try:
+        # Build the conversation_config for the API
+        conversation_config = {
+            "agent": {
+                "prompt": {
+                    "prompt": system_prompt,
+                    "first_message": first_message
+                }
+            },
+            "tts": {
+                "voice_id": voice_id
+            },
+            "llm": {
+                "model": llm_model,
+                "temperature": float(temperature) if temperature is not None else 0.5
+            },
             "language": language
         }
         
-        instructions = f"""
-Agent creation is currently only available through the ElevenLabs web interface.
-
-To create your agent '{name}':
-
-1. Visit: https://elevenlabs.io/app/conversational-ai/agents
-2. Click "Create New Agent" or use "Blank Template"
-3. Configure with these settings:
-   - Name: {name}
-   - System Prompt: {system_prompt}
-   - First Message: {first_message}
-   - Voice ID: {voice_id}
-   - LLM Model: {llm_model}
-   - Temperature: {temperature}
-   - Language: {language}
-
-4. After creating the agent, copy the agent_id and use it with other tools in this MCP server.
-
-Note: The API currently supports managing existing agents but not creating new ones.
-"""
+        # Create the agent using the API
+        agent_data = {
+            "conversation_config": conversation_config,
+            "name": name
+        }
+        
+        result = await client.create_agent(agent_data)
         
         return format_success(
-            "Agent creation guidance provided",
+            f"Agent '{name}' created successfully",
             {
-                "instructions": instructions,
-                "config": config,
-                "create_url": "https://elevenlabs.io/app/conversational-ai/agents"
+                "agent_id": result.get("agent_id"),
+                "name": name,
+                "config": conversation_config
             }
         )
     except Exception as e:
-        logger.error(f"Failed to provide agent creation guidance: {e}")
-        return format_error(str(e))
+        logger.error(f"Failed to create agent: {e}")
+        error_msg = str(e)
+        
+        # Provide specific suggestions based on error
+        if "voice_id" in error_msg.lower():
+            suggestion = "Check voice_id is valid. Use list_voices() to see available voices"
+        elif "model" in error_msg.lower():
+            suggestion = "Check LLM model name. Common models: gemini-2.0-flash-001, gpt-4o-mini"
+        elif "unauthorized" in error_msg.lower() or "401" in error_msg:
+            suggestion = "Check your ELEVENLABS_API_KEY is valid"
+        else:
+            suggestion = "Check API key and ensure all parameters are valid"
+            
+        return format_error(error_msg, suggestion)
 
 
 @mcp.tool()
@@ -164,13 +226,32 @@ async def get_agent(agent_id: str) -> Dict[str, Any]:
     Get detailed information about a specific agent.
     
     Args:
-        agent_id: Unique agent identifier
+        agent_id: Unique agent identifier (format: agent_XXXX or UUID)
     
     Returns:
         Complete agent configuration and metadata
+    
+    Examples:
+        get_agent("agent_abc123def456ghi789jkl012mno345")
+        get_agent("550e8400-e29b-41d4-a716-446655440000")
+    
+    ID Format:
+        - agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX (agent_ + 28 characters)
+        - Standard UUID format also accepted
+    
+    API Endpoint: GET /v1/convai/agents/{agent_id}
     """
+    if not agent_id:
+        return format_error(
+            "Agent ID is required",
+            "Provide agent_id from create_agent() or list_agents()"
+        )
+    
     if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error("Invalid agent ID format", suggestion="Provide a valid agent ID (e.g., agent_XXXX or UUID)")
+        return format_error(
+            f"Invalid agent ID format: {agent_id}",
+            "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX (agent_ + 28 chars) or valid UUID"
+        )
     
     try:
         agent = await client.get_agent(agent_id)
@@ -180,7 +261,16 @@ async def get_agent(agent_id: str) -> Dict[str, Any]:
         )
     except Exception as e:
         logger.error(f"Failed to get agent {agent_id}: {e}")
-        return format_error(str(e), suggestion="Check agent ID exists")
+        error_msg = str(e)
+        
+        if "404" in error_msg or "not found" in error_msg.lower():
+            suggestion = f"Agent {agent_id} not found. Use list_agents() to see available agents"
+        elif "unauthorized" in error_msg.lower() or "401" in error_msg:
+            suggestion = "Check your ELEVENLABS_API_KEY is valid"
+        else:
+            suggestion = "Verify agent ID format and that the agent exists"
+            
+        return format_error(error_msg, suggestion)
 
 
 @mcp.tool()
@@ -310,12 +400,99 @@ async def configure_voice(
     
     Returns:
         Configuration result with voice settings applied
-        
-    Example:
+    
+    Examples:
+        # Standard configuration
         configure_voice("agent_abc123", "cgSgspJ2msm6clMCkdW9", 0.7, 0.9, 1.0)
+        
+        # More stable, consistent voice
+        configure_voice("agent_abc123", "21m00Tcm4TlvDq8ikWAM", 
+                       stability=0.9, similarity_boost=0.95)
+        
+        # More expressive, variable voice
+        configure_voice("agent_abc123", "yoZ06aMxZJJ28mfd3POQ",
+                       stability=0.3, similarity_boost=0.5, speed=1.1)
+    
+    Parameter Guidelines:
+        stability:
+            - 0.0-0.3: Very expressive, emotional range
+            - 0.4-0.6: Balanced expression (default: 0.5)
+            - 0.7-1.0: Consistent, stable delivery
+        
+        similarity_boost:
+            - 0.0-0.3: Creative interpretation
+            - 0.4-0.7: Natural variation
+            - 0.8-1.0: Strict voice matching (default: 0.8)
+        
+        speed:
+            - 0.7-0.9: Slower, more deliberate
+            - 1.0: Normal speed (default)
+            - 1.1-1.2: Faster, energetic
+    
+    API Endpoint: PATCH /v1/convai/agents/{agent_id}
     """
+    # Validate agent ID
+    if not agent_id:
+        return format_error(
+            "Agent ID is required",
+            "Provide agent_id from create_agent() or list_agents()"
+        )
+    
     if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error("Invalid agent ID format")
+        return format_error(
+            f"Invalid agent ID format: {agent_id}",
+            "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        )
+    
+    # Validate voice ID
+    if not voice_id:
+        return format_error(
+            "Voice ID is required",
+            "Provide a valid ElevenLabs voice ID"
+        )
+    
+    # Validate and coerce numeric parameters
+    if stability is not None:
+        try:
+            stability = float(stability)
+            if not 0.0 <= stability <= 1.0:
+                return format_error(
+                    f"Stability {stability} out of range",
+                    "Stability must be between 0.0 (variable) and 1.0 (stable)"
+                )
+        except (TypeError, ValueError):
+            return format_error(
+                "Stability must be a number",
+                "Use a value between 0.0 and 1.0"
+            )
+    
+    if similarity_boost is not None:
+        try:
+            similarity_boost = float(similarity_boost)
+            if not 0.0 <= similarity_boost <= 1.0:
+                return format_error(
+                    f"Similarity boost {similarity_boost} out of range",
+                    "Similarity boost must be between 0.0 (creative) and 1.0 (strict)"
+                )
+        except (TypeError, ValueError):
+            return format_error(
+                "Similarity boost must be a number",
+                "Use a value between 0.0 and 1.0"
+            )
+    
+    if speed is not None:
+        try:
+            speed = float(speed)
+            if not 0.7 <= speed <= 1.2:
+                return format_error(
+                    f"Speed {speed} out of range",
+                    "Speed must be between 0.7 (slower) and 1.2 (faster)"
+                )
+        except (TypeError, ValueError):
+            return format_error(
+                "Speed must be a number",
+                "Use a value between 0.7 and 1.2"
+            )
     
     try:
         config = {
@@ -336,7 +513,16 @@ async def configure_voice(
         )
     except Exception as e:
         logger.error(f"Failed to configure voice for {agent_id}: {e}")
-        return format_error(str(e))
+        error_msg = str(e)
+        
+        if "voice" in error_msg.lower():
+            suggestion = "Check voice_id is valid. Common IDs: cgSgspJ2msm6clMCkdW9, 21m00Tcm4TlvDq8ikWAM"
+        elif "404" in error_msg or "not found" in error_msg.lower():
+            suggestion = f"Agent {agent_id} not found. Use list_agents() to see available agents"
+        else:
+            suggestion = "Verify all parameters are within valid ranges"
+            
+        return format_error(error_msg, suggestion)
 
 
 @mcp.tool()
@@ -435,40 +621,235 @@ async def add_transfer_to_agent(
 
 
 # ============================================================
-# Testing and Simulation Tools
+# Additional Agent Management Tools
 # ============================================================
 
 @mcp.tool()
-async def simulate_conversation(
+async def duplicate_agent(
     agent_id: str,
-    user_message: str
+    new_name: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Simulate a conversation with an agent.
+    Duplicate an existing agent.
     
     Args:
-        agent_id: Agent to test
-        user_message: Test message
+        agent_id: Agent to duplicate
+        new_name: Name for the duplicated agent
     
     Returns:
-        Simulated agent response
+        New agent details with agent_id
     """
     if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
-        # Note: This would call the actual simulation endpoint
-        # For now, returning a mock response
+        # Duplicate the agent
+        result = await client._request(
+            "POST", 
+            f"/convai/agents/{agent_id}/duplicate",
+            json_data={"name": new_name} if new_name else {}
+        )
+        
         return format_success(
-            "Simulation completed",
-            {
-                "user_message": user_message,
-                "agent_response": "This would be the agent's simulated response",
-                "confidence": 0.95
-            }
+            f"Agent duplicated successfully",
+            {"agent": result}
         )
     except Exception as e:
-        logger.error(f"Failed to simulate conversation: {e}")
+        logger.error(f"Failed to duplicate agent {agent_id}: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def get_agent_link(agent_id: str) -> Dict[str, Any]:
+    """
+    Get a shareable link for an agent.
+    
+    Args:
+        agent_id: Agent to get link for
+    
+    Returns:
+        Shareable link URL
+    """
+    if not validate_elevenlabs_id(agent_id, 'agent'):
+        return format_error("Invalid agent ID format")
+    
+    try:
+        result = await client._request("GET", f"/convai/agents/{agent_id}/link")
+        return format_success(
+            "Agent link retrieved",
+            {"link": result.get("link"), "agent_id": agent_id}
+        )
+    except Exception as e:
+        logger.error(f"Failed to get agent link: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def calculate_llm_usage(
+    agent_id: str,
+    estimated_conversations: Optional[int] = 100,
+    average_duration_minutes: Optional[float] = 5.0
+) -> Dict[str, Any]:
+    """
+    Calculate expected LLM usage and costs for an agent.
+    
+    Args:
+        agent_id: Agent to calculate usage for
+        estimated_conversations: Number of expected conversations
+        average_duration_minutes: Average conversation duration
+    
+    Returns:
+        Usage statistics and cost estimates
+    """
+    if not validate_elevenlabs_id(agent_id, 'agent'):
+        return format_error("Invalid agent ID format")
+    
+    try:
+        result = await client._request(
+            "POST",
+            f"/convai/agents/{agent_id}/calculate-llm-usage",
+            json_data={
+                "estimated_conversations": estimated_conversations,
+                "average_duration_minutes": average_duration_minutes
+            }
+        )
+        
+        return format_success(
+            "LLM usage calculated",
+            {"usage": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to calculate LLM usage: {e}")
+        return format_error(str(e))
+
+
+# ============================================================
+# Widget Management Tools
+# ============================================================
+
+@mcp.tool()
+async def get_widget(widget_id: str) -> Dict[str, Any]:
+    """
+    Get widget configuration for an agent.
+    
+    Args:
+        widget_id: Widget identifier
+    
+    Returns:
+        Widget configuration and embed code
+    """
+    if not validate_uuid(widget_id):
+        return format_error("Invalid widget ID format")
+    
+    try:
+        result = await client._request("GET", f"/convai/widgets/{widget_id}")
+        return format_success(
+            "Widget configuration retrieved",
+            {"widget": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to get widget: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def create_widget_avatar(
+    widget_id: str,
+    avatar_image_url: Optional[str] = None,
+    avatar_style: Optional[str] = "default"
+) -> Dict[str, Any]:
+    """
+    Create or update widget avatar.
+    
+    Args:
+        widget_id: Widget identifier
+        avatar_image_url: URL of avatar image
+        avatar_style: Avatar style (default, animated, custom)
+    
+    Returns:
+        Avatar configuration
+    """
+    if not validate_uuid(widget_id):
+        return format_error("Invalid widget ID format")
+    
+    try:
+        result = await client._request(
+            "POST",
+            f"/convai/widgets/{widget_id}/avatar",
+            json_data={
+                "avatar_image_url": avatar_image_url,
+                "style": avatar_style
+            }
+        )
+        
+        return format_success(
+            "Widget avatar created",
+            {"avatar": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to create widget avatar: {e}")
+        return format_error(str(e))
+
+
+# ============================================================
+# Voice Library Tools
+# ============================================================
+
+@mcp.tool()
+async def get_shared_voices() -> Dict[str, Any]:
+    """
+    Get available shared voices from the voice library.
+    
+    Returns:
+        List of available voices with details
+    """
+    try:
+        result = await client._request("GET", "/voices/shared", use_cache=True)
+        voices = result.get("voices", [])
+        
+        return format_success(
+            f"Found {len(voices)} shared voices",
+            {"count": len(voices), "voices": voices}
+        )
+    except Exception as e:
+        logger.error(f"Failed to get shared voices: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def add_shared_voice(
+    voice_id: str,
+    name: Optional[str] = None,
+    description: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Add a shared voice to your workspace.
+    
+    Args:
+        voice_id: Voice identifier to add
+        name: Custom name for the voice
+        description: Voice description
+    
+    Returns:
+        Added voice details
+    """
+    try:
+        result = await client._request(
+            "POST",
+            "/voices/add",
+            json_data={
+                "voice_id": voice_id,
+                "name": name,
+                "description": description
+            }
+        )
+        
+        return format_success(
+            f"Voice '{name or voice_id}' added to workspace",
+            {"voice": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to add shared voice: {e}")
         return format_error(str(e))
 
 
@@ -486,8 +867,8 @@ if __name__ == "__main__":
     
     if args.test:
         # Test mode - verify all components
-        print(f"Server: elevenlabs-agents v0.1.0")
-        print(f"Tools: {len(mcp.tools)}")
+        print(f"Server: elevenlabs-agents v0.2.0")
+        print(f"Tools: {len(mcp.tools)} (expecting 12)")
         print(f"Config: API key {Config.mask_api_key()}")
         print("All components loaded successfully!")
     else:

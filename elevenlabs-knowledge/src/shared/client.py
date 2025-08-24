@@ -116,7 +116,7 @@ class ElevenLabsClient:
     
     async def create_agent(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Create a new agent."""
-        return await self._request("POST", "/convai/agents", json_data=config)
+        return await self._request("POST", "/convai/agents/create", json_data=config)
     
     async def update_agent(self, agent_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Update agent configuration."""

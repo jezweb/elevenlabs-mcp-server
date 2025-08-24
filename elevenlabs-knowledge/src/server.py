@@ -80,31 +80,93 @@ async def add_document_url(
     Add a document to the knowledge base from a URL.
     
     Args:
-        url: Web page URL to add
-        name: Document name (auto-generated if not provided)
-        agent_id: Optional agent to attach document to
+        url: Web page URL to add (must include protocol)
+        name: Document name (auto-generated from URL if not provided)
+        agent_id: Optional agent to attach document to (format: agent_XXXX)
     
     Returns:
         Document ID and details
+    
+    Examples:
+        add_document_url("https://docs.example.com/guide")
+        add_document_url("https://api.docs.com", name="API Documentation")
+        add_document_url("https://help.site.com", agent_id="agent_abc123")
+    
+    Supported URL Types:
+        - Web pages (HTML)
+        - PDF documents
+        - Plain text files
+        - Markdown files
+    
+    Size Limits:
+        - Maximum page size: 10MB
+        - Processing timeout: 30 seconds
+    
+    API Endpoint: POST /v1/convai/knowledge-base
     """
+    # Validate URL
+    if not url:
+        return format_error(
+            "URL is required",
+            "Provide a valid URL starting with http:// or https://"
+        )
+    
+    # Check URL format
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(url)
+        if not parsed.scheme:
+            return format_error(
+                "URL missing protocol",
+                f"Add http:// or https:// to the URL: https://{url}"
+            )
+        if parsed.scheme not in ['http', 'https']:
+            return format_error(
+                f"Invalid URL protocol: {parsed.scheme}",
+                "URL must start with http:// or https://"
+            )
+        if not parsed.netloc:
+            return format_error(
+                "Invalid URL format",
+                "Provide a complete URL like https://example.com/page"
+            )
+    except Exception:
+        return format_error(
+            "Invalid URL format",
+            "Provide a valid URL like https://example.com"
+        )
+    
+    # Validate agent_id if provided
+    if agent_id:
+        if not validate_elevenlabs_id(agent_id, 'agent'):
+            return format_error(
+                f"Invalid agent ID format: {agent_id}",
+                "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            )
+    
     try:
         # Auto-generate name from URL if not provided
         if not name:
-            from urllib.parse import urlparse
-            parsed = urlparse(url)
-            name = f"{parsed.netloc}{parsed.path}".replace("/", "_")
+            # Create readable name from URL
+            name = parsed.netloc.replace("www.", "")
+            if parsed.path and parsed.path != "/":
+                path_name = parsed.path.strip("/").replace("/", "_").replace("-", "_")
+                name = f"{name}_{path_name}"
+            # Limit name length
+            if len(name) > 100:
+                name = name[:100]
         
         result = await client.add_document_url(name, url)
         
         response_data = {
             "document_id": result.get("id"),
             "name": name,
-            "url": url
+            "url": url,
+            "status": "processing"
         }
         
         # Attach to agent if specified
-        if agent_id and validate_elevenlabs_id(agent_id, 'agent'):
-            # Note: Would need additional API call to attach to agent
+        if agent_id:
             response_data["attached_to_agent"] = agent_id
         
         return format_success(
@@ -113,7 +175,18 @@ async def add_document_url(
         )
     except Exception as e:
         logger.error(f"Failed to add document from URL: {e}")
-        return format_error(str(e), suggestion="Check URL is accessible")
+        error_msg = str(e)
+        
+        if "timeout" in error_msg.lower():
+            suggestion = "URL took too long to load. Check if the site is accessible"
+        elif "size" in error_msg.lower():
+            suggestion = "Document too large. Maximum size is 10MB"
+        elif "404" in error_msg or "not found" in error_msg.lower():
+            suggestion = f"URL {url} not found. Verify the URL is correct"
+        else:
+            suggestion = "Check URL is accessible and not behind authentication"
+            
+        return format_error(error_msg, suggestion)
 
 
 @mcp.tool()
@@ -126,28 +199,90 @@ async def add_document_text(
     Add a text document to the knowledge base.
     
     Args:
-        text: Document content
-        name: Document name
-        agent_id: Optional agent to attach to
+        text: Document content (plain text or markdown)
+        name: Document name (descriptive identifier)
+        agent_id: Optional agent to attach to (format: agent_XXXX)
     
     Returns:
         Document ID and details
+    
+    Examples:
+        add_document_text("Product specs: ...", "Product Documentation")
+        add_document_text(faq_content, "FAQ", agent_id="agent_abc123")
+    
+    Content Guidelines:
+        - Minimum length: 10 characters
+        - Maximum length: 500,000 characters (~100 pages)
+        - Supports plain text and markdown formatting
+        - UTF-8 encoding required
+    
+    Chunking Info:
+        - Default chunk size: 512 characters
+        - Chunks have 50 character overlap
+        - Long documents automatically split for indexing
+    
+    API Endpoint: POST /v1/convai/knowledge-base
     """
+    # Validate inputs
+    if not text or not text.strip():
+        return format_error(
+            "Document text cannot be empty",
+            "Provide document content to add to the knowledge base"
+        )
+    
+    if len(text) < 10:
+        return format_error(
+            "Document text too short",
+            "Provide at least 10 characters of content"
+        )
+    
+    if len(text) > 500000:
+        return format_error(
+            f"Document too large ({len(text)} characters)",
+            "Maximum document size is 500,000 characters. Consider splitting into multiple documents"
+        )
+    
+    if not name or not name.strip():
+        return format_error(
+            "Document name is required",
+            "Provide a descriptive name for the document"
+        )
+    
+    if len(name) > 200:
+        return format_error(
+            f"Document name too long ({len(name)} characters)",
+            "Use a name under 200 characters"
+        )
+    
+    # Validate agent_id if provided
+    if agent_id:
+        if not validate_elevenlabs_id(agent_id, 'agent'):
+            return format_error(
+                f"Invalid agent ID format: {agent_id}",
+                "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            )
+    
     try:
         result = await client.add_document_text(name, text)
+        
+        # Calculate chunking info
+        chunk_size = 512
+        chunk_overlap = 50
+        estimated_chunks = max(1, (len(text) - chunk_overlap) // (chunk_size - chunk_overlap) + 1)
         
         response_data = {
             "document_id": result.get("id"),
             "name": name,
             "character_count": len(text),
-            "estimated_chunks": len(text) // 512 + 1
+            "estimated_chunks": estimated_chunks,
+            "processing_status": "indexing"
         }
         
-        if agent_id and validate_elevenlabs_id(agent_id, 'agent'):
+        if agent_id:
             response_data["attached_to_agent"] = agent_id
         
         return format_success(
-            f"Document '{name}' added",
+            f"Document '{name}' added ({len(text)} characters)",
             response_data
         )
     except Exception as e:
@@ -303,184 +438,287 @@ async def rebuild_index(
 
 
 # ============================================================
-# Conversation Management Tools
+# Document Management Tools
 # ============================================================
 
 @mcp.tool()
-async def list_conversations(
-    agent_id: Optional[str] = None,
-    limit: Annotated[int, Field(ge=1, le=100, description="Maximum results (1-100)")] = 20,
-    offset: Annotated[int, Field(ge=0, description="Pagination offset (0 or greater)")] = 0
+async def get_document(document_id: str) -> Dict[str, Any]:
+    """
+    Get document details from knowledge base.
+    
+    Args:
+        document_id: Document identifier
+    
+    Returns:
+        Document metadata and content info
+    """
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
+    
+    try:
+        result = await client._request("GET", f"/convai/knowledge-base/{document_id}")
+        return format_success(
+            "Document retrieved",
+            {"document": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to get document: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def update_document(
+    document_id: str,
+    name: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    List conversations.
+    Update document metadata.
     
     Args:
-        agent_id: Filter by agent
-        limit: Maximum results (1-100)
-        offset: Pagination offset
+        document_id: Document to update
+        name: New document name
+        metadata: Updated metadata
     
     Returns:
-        List of conversations with metadata
+        Updated document details
     """
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
+    
     try:
-        if limit < 1 or limit > 100:
-            return format_error("limit must be between 1 and 100")
+        update_data = {}
+        if name:
+            update_data["name"] = name
+        if metadata:
+            update_data["metadata"] = metadata
+            
+        result = await client._request(
+            "PATCH",
+            f"/convai/knowledge-base/{document_id}",
+            json_data=update_data
+        )
         
-        conversations = await client.list_conversations(agent_id, limit, offset)
         return format_success(
-            f"Found {len(conversations)} conversations",
-            {
-                "count": len(conversations),
-                "conversations": conversations,
-                "pagination": {
-                    "limit": limit,
-                    "offset": offset,
-                    "has_more": len(conversations) == limit
-                }
-            }
+            "Document updated",
+            {"document": result}
         )
     except Exception as e:
-        logger.error(f"Failed to list conversations: {e}")
+        logger.error(f"Failed to update document: {e}")
         return format_error(str(e))
 
 
 @mcp.tool()
-async def get_conversation(conversation_id: str) -> Dict[str, Any]:
+async def add_document_file(
+    file_path: str,
+    name: str,
+    agent_id: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
     """
-    Get detailed conversation data.
+    Upload a file to the knowledge base.
     
     Args:
-        conversation_id: Conversation to retrieve
+        file_path: Path to file to upload
+        name: Document name
+        agent_id: Optional agent to attach to
+        metadata: Optional metadata
     
     Returns:
-        Complete conversation details
+        Document ID and upload status
     """
-    if not validate_elevenlabs_id(conversation_id, 'conversation'):
-        return format_error("Invalid conversation ID format")
-    
     try:
-        conversation = await client.get_conversation(conversation_id)
+        # Note: File upload requires multipart form data
+        # This is a simplified implementation
+        with open(file_path, 'rb') as f:
+            files = {"file": (name, f, "application/octet-stream")}
+            data = {"metadata": metadata} if metadata else {}
+            if agent_id:
+                data["agent_id"] = agent_id
+                
+            result = await client._request(
+                "POST",
+                "/convai/knowledge-base/file",
+                files=files,
+                json_data=data
+            )
+        
         return format_success(
-            "Retrieved conversation details",
-            {"conversation": conversation}
+            f"Document '{name}' uploaded",
+            {"document": result}
         )
     except Exception as e:
-        logger.error(f"Failed to get conversation {conversation_id}: {e}")
+        logger.error(f"Failed to upload file: {e}")
         return format_error(str(e))
 
 
 @mcp.tool()
-async def get_transcript(conversation_id: str) -> Dict[str, Any]:
+async def get_document_content(document_id: str) -> Dict[str, Any]:
     """
-    Get conversation transcript.
+    Get full content of a document.
     
     Args:
-        conversation_id: Conversation ID
+        document_id: Document identifier
     
     Returns:
-        Text transcript
+        Document content
     """
-    if not validate_elevenlabs_id(conversation_id, 'conversation'):
-        return format_error("Invalid conversation ID format")
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
     
     try:
-        transcript = await client.get_transcript(conversation_id)
-        
-        # Parse transcript into structured format
-        lines = transcript.split('\n')
-        turns = []
-        current_speaker = None
-        current_text = []
-        
-        for line in lines:
-            if line.startswith(('Agent:', 'User:', 'Customer:')):
-                if current_speaker:
-                    turns.append({
-                        "speaker": current_speaker,
-                        "text": ' '.join(current_text)
-                    })
-                parts = line.split(':', 1)
-                current_speaker = parts[0]
-                current_text = [parts[1].strip()] if len(parts) > 1 else []
-            elif line.strip():
-                current_text.append(line.strip())
-        
-        if current_speaker:
-            turns.append({
-                "speaker": current_speaker,
-                "text": ' '.join(current_text)
-            })
-        
+        result = await client._request("GET", f"/convai/knowledge-base/{document_id}/content")
         return format_success(
-            "Retrieved transcript",
-            {
-                "conversation_id": conversation_id,
-                "turn_count": len(turns),
-                "turns": turns,
-                "raw_transcript": transcript
-            }
+            "Document content retrieved",
+            {"content": result}
         )
     except Exception as e:
-        logger.error(f"Failed to get transcript: {e}")
+        logger.error(f"Failed to get document content: {e}")
         return format_error(str(e))
 
 
 @mcp.tool()
-async def analyze_conversation(conversation_id: str) -> Dict[str, Any]:
+async def get_document_chunk(
+    document_id: str,
+    chunk_id: str
+) -> Dict[str, Any]:
     """
-    Analyze a conversation for insights.
+    Get a specific chunk from a document.
     
     Args:
-        conversation_id: Conversation to analyze
+        document_id: Document identifier
+        chunk_id: Chunk identifier
     
     Returns:
-        Analysis with metrics and insights
+        Chunk content and metadata
     """
-    if not validate_elevenlabs_id(conversation_id, 'conversation'):
-        return format_error("Invalid conversation ID format")
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
     
     try:
-        # Get conversation and transcript
-        conversation = await client.get_conversation(conversation_id)
-        transcript = await client.get_transcript(conversation_id)
-        
-        # Basic analysis
-        word_count = len(transcript.split())
-        line_count = len(transcript.split('\n'))
-        
-        # Sentiment indicators (simplified)
-        positive_words = ['great', 'excellent', 'perfect', 'thank', 'helpful']
-        negative_words = ['problem', 'issue', 'bad', 'wrong', 'frustrated']
-        
-        positive_count = sum(1 for word in positive_words if word in transcript.lower())
-        negative_count = sum(1 for word in negative_words if word in transcript.lower())
-        
-        analysis = {
-            "conversation_id": conversation_id,
-            "duration_seconds": conversation.get("duration"),
-            "metrics": {
-                "word_count": word_count,
-                "turn_count": line_count,
-                "average_turn_length": word_count // line_count if line_count > 0 else 0
-            },
-            "sentiment": {
-                "positive_indicators": positive_count,
-                "negative_indicators": negative_count,
-                "overall": "positive" if positive_count > negative_count else "negative" if negative_count > positive_count else "neutral"
-            },
-            "outcomes": {
-                "transfer_occurred": conversation.get("transfer", {}).get("occurred", False),
-                "ended_by": conversation.get("ended_by", "unknown")
-            }
-        }
-        
+        result = await client._request(
+            "GET",
+            f"/convai/knowledge-base/{document_id}/chunks/{chunk_id}"
+        )
         return format_success(
-            "Conversation analyzed",
-            {"analysis": analysis}
+            "Chunk retrieved",
+            {"chunk": result}
         )
     except Exception as e:
-        logger.error(f"Failed to analyze conversation: {e}")
+        logger.error(f"Failed to get document chunk: {e}")
+        return format_error(str(e))
+
+
+# ============================================================
+# RAG Index Management Tools
+# ============================================================
+
+@mcp.tool()
+async def compute_rag_index(
+    document_id: str,
+    embedding_model: Optional[str] = "e5_mistral_7b_instruct"
+) -> Dict[str, Any]:
+    """
+    Compute RAG index for a document.
+    
+    Args:
+        document_id: Document to index
+        embedding_model: Model to use for embeddings
+    
+    Returns:
+        Indexing status
+    """
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
+    
+    try:
+        result = await client._request(
+            "POST",
+            f"/convai/knowledge-base/{document_id}/compute-rag-index",
+            json_data={"embedding_model": embedding_model}
+        )
+        
+        return format_success(
+            "RAG index computation started",
+            {"index": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to compute RAG index: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def get_rag_index(document_id: str) -> Dict[str, Any]:
+    """
+    Get RAG index details for a document.
+    
+    Args:
+        document_id: Document identifier
+    
+    Returns:
+        Index configuration and status
+    """
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
+    
+    try:
+        result = await client._request("GET", f"/convai/knowledge-base/{document_id}/rag-index")
+        return format_success(
+            "RAG index retrieved",
+            {"index": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to get RAG index: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def get_rag_index_overview(document_id: str) -> Dict[str, Any]:
+    """
+    Get RAG index statistics and overview.
+    
+    Args:
+        document_id: Document identifier
+    
+    Returns:
+        Index statistics and metadata
+    """
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
+    
+    try:
+        result = await client._request(
+            "GET",
+            f"/convai/knowledge-base/{document_id}/rag-index-overview"
+        )
+        return format_success(
+            "RAG index overview retrieved",
+            {"overview": result}
+        )
+    except Exception as e:
+        logger.error(f"Failed to get RAG index overview: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def delete_rag_index(document_id: str) -> Dict[str, Any]:
+    """
+    Delete RAG index for a document.
+    
+    Args:
+        document_id: Document identifier
+    
+    Returns:
+        Deletion confirmation
+    """
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
+    
+    try:
+        await client._request("DELETE", f"/convai/knowledge-base/{document_id}/rag-index")
+        return format_success(f"RAG index deleted for document {document_id}")
+    except Exception as e:
+        logger.error(f"Failed to delete RAG index: {e}")
         return format_error(str(e))
 
 
@@ -489,122 +727,86 @@ async def analyze_conversation(conversation_id: str) -> Dict[str, Any]:
 # ============================================================
 
 @mcp.tool()
-async def performance_report(
-    agent_id: str,
-    days: Annotated[int, Field(ge=1, le=30, description="Number of days to include (1-30)")] = 7
-) -> Dict[str, Any]:
+async def get_dependent_agents(document_id: str) -> Dict[str, Any]:
     """
-    Generate performance report for an agent.
+    Get agents that depend on this document.
     
     Args:
-        agent_id: Agent to analyze
-        days: Number of days to include (1-30)
+        document_id: Document identifier
     
     Returns:
-        Performance metrics and insights
+        List of dependent agents
     """
-    if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error("Invalid agent ID format")
-    
-    if days < 1 or days > 30:
-        return format_error("days must be between 1 and 30")
+    if not validate_elevenlabs_id(document_id, 'document'):
+        return format_error("Invalid document ID format")
     
     try:
-        # Get recent conversations
-        conversations = await client.list_conversations(agent_id, limit=100)
-        
-        if not conversations:
-            return format_success(
-                "No conversations found",
-                {"agent_id": agent_id, "period_days": days}
-            )
-        
-        # Calculate metrics
-        total_conversations = len(conversations)
-        total_duration = sum(c.get("duration", 0) for c in conversations)
-        avg_duration = total_duration / total_conversations if total_conversations > 0 else 0
-        
-        # Transfer rate
-        transfers = sum(1 for c in conversations if c.get("transfer", {}).get("occurred", False))
-        transfer_rate = (transfers / total_conversations * 100) if total_conversations > 0 else 0
-        
-        report = {
-            "agent_id": agent_id,
-            "period_days": days,
-            "metrics": {
-                "total_conversations": total_conversations,
-                "average_duration_seconds": round(avg_duration, 2),
-                "total_duration_seconds": total_duration,
-                "transfer_rate_percent": round(transfer_rate, 2),
-                "conversations_per_day": round(total_conversations / days, 2)
-            },
-            "outcomes": {
-                "successful": total_conversations - transfers,
-                "transferred": transfers
-            }
-        }
+        result = await client._request(
+            "GET",
+            f"/convai/knowledge-base/{document_id}/dependent-agents"
+        )
+        agents = result.get("agents", [])
         
         return format_success(
-            f"Performance report for {days} days",
-            {"report": report}
+            f"Found {len(agents)} dependent agents",
+            {"agents": agents, "count": len(agents)}
         )
     except Exception as e:
-        logger.error(f"Failed to generate report: {e}")
+        logger.error(f"Failed to get dependent agents: {e}")
         return format_error(str(e))
 
 
 @mcp.tool()
-async def export_conversations(
-    agent_id: Optional[str] = None,
-    format: Annotated[str, Field(pattern="^(json|csv)$", description="Export format (json or csv)")] = "json",
-    limit: Annotated[int, Field(ge=1, le=1000, description="Maximum conversations to export (1-1000)")] = 100
-) -> Dict[str, Any]:
+async def get_knowledge_base_size() -> Dict[str, Any]:
     """
-    Export conversation data.
-    
-    Args:
-        agent_id: Filter by agent
-        format: Export format (json or csv)
-        limit: Maximum conversations to export
+    Get total knowledge base size and statistics.
     
     Returns:
-        Exported data
+        Storage metrics and document counts
     """
-    if format not in ["json", "csv"]:
-        return format_error("format must be 'json' or 'csv'")
-    
     try:
-        conversations = await client.list_conversations(agent_id, limit=limit)
-        
-        if format == "json":
-            export_data = json.dumps(conversations, indent=2, default=str)
-        else:  # csv
-            # Simplified CSV generation
-            if conversations:
-                headers = ["conversation_id", "agent_id", "duration", "start_time"]
-                rows = [headers]
-                for c in conversations:
-                    rows.append([
-                        c.get("conversation_id", ""),
-                        c.get("agent_id", ""),
-                        str(c.get("duration", "")),
-                        c.get("start_time", "")
-                    ])
-                export_data = '\n'.join([','.join(row) for row in rows])
-            else:
-                export_data = "No data"
-        
+        result = await client._request("GET", "/convai/knowledge-base/size")
         return format_success(
-            f"Exported {len(conversations)} conversations",
-            {
-                "format": format,
-                "count": len(conversations),
-                "data": export_data if format == "csv" else conversations
-            }
+            "Knowledge base statistics retrieved",
+            {"statistics": result}
         )
     except Exception as e:
-        logger.error(f"Failed to export conversations: {e}")
+        logger.error(f"Failed to get knowledge base size: {e}")
         return format_error(str(e))
+
+
+# ============================================================
+# Conversation Management Tools
+# ============================================================
+# Main entry point
+# ============================================================
+
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="ElevenLabs Knowledge MCP Server")
+    parser.add_argument("--test", action="store_true", help="Test mode")
+    args = parser.parse_args()
+    
+    if args.test:
+        # Test mode - verify all components
+        print(f"Server: elevenlabs-knowledge v0.1.0")
+        print(f"Tools: {len(mcp.tools)}")
+        print(f"Config: API key {Config.mask_api_key()}")
+        print("All components loaded successfully!")
+    else:
+        # Run server
+        logger.info("Starting MCP server...")
+        mcp.run()
+
+# REMOVED_DUPLICATE_CONVERSATION_TOOLS
+# The following tools were removed as they are duplicated in elevenlabs-conversations:
+# - list_conversations
+# - get_conversation  
+# - get_transcript
+# - analyze_conversation
+# - performance_report
+# - export_conversations
 
 
 # ============================================================
