@@ -5,7 +5,7 @@ import functools
 import logging
 import os
 import re
-from typing import Any, Dict, Optional, TypeVar, Callable
+from typing import Any, Dict, List, Optional, TypeVar, Callable
 from datetime import datetime
 
 import httpx
