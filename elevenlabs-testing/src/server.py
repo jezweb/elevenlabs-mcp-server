@@ -759,7 +759,7 @@ async def stream_simulate_conversation(
 
 # Resources
 
-@mcp.resource("documentation")
+@mcp.resource("resource://documentation")
 async def get_documentation() -> str:
     """Get server documentation."""
     return """

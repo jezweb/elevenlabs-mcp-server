@@ -999,7 +999,7 @@ async def export_conversations(
 
 # Resources
 
-@mcp.resource("documentation")
+@mcp.resource("resource://documentation")
 async def get_documentation() -> str:
     """Get server documentation."""
     return """

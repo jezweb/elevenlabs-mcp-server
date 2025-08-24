@@ -867,7 +867,7 @@ async def delete_secret(
 
 # Resources
 
-@mcp.resource("documentation")
+@mcp.resource("resource://documentation")
 async def get_documentation() -> str:
     """Get server documentation."""
     return """
