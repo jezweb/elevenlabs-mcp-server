@@ -399,9 +399,9 @@ async def update_system_prompt(
 async def configure_voice(
     agent_id: str,
     voice_id: str,
-    stability: Optional[float] = 0.5,
-    similarity_boost: Optional[float] = 0.8,
-    speed: Optional[float] = 1.0
+    stability: Optional[str] = "0.5",
+    similarity_boost: Optional[str] = "0.8",
+    speed: Optional[str] = "1.0"
 ) -> Dict[str, Any]:
     """
     Configure agent voice settings.
