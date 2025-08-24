@@ -2,23 +2,39 @@
 """
 ElevenLabs Knowledge MCP Server
 ================================
-Manages knowledge base, RAG configuration, and conversation analytics.
+Manages knowledge base, RAG configuration, and analytics.
 """
 
+import sys
 import logging
-from typing import Dict, Any, Optional, List
-import json
+from typing import Dict, Any, Optional
 from contextlib import asynccontextmanager
 
 from fastmcp import FastMCP
-from shared import (
-    Config, 
-    ElevenLabsClient, 
-    format_success, 
-    format_error, 
-    validate_uuid,
-    validate_elevenlabs_id,
-    chunk_text
+from shared import Config, ElevenLabsClient
+
+# Import all tools
+from tools import (
+    # Document Management
+    add_document_url,
+    add_document_text,
+    list_documents,
+    delete_document,
+    get_document,
+    update_document,
+    add_document_file,
+    get_document_content,
+    get_document_chunk,
+    # RAG Configuration
+    configure_rag,
+    rebuild_index,
+    compute_rag_index,
+    get_rag_index,
+    get_rag_index_overview,
+    delete_rag_index,
+    # Analytics
+    get_dependent_agents,
+    get_knowledge_base_size
 )
 
 # Configure logging
@@ -70,7 +86,7 @@ mcp = FastMCP(
 # ============================================================
 
 @mcp.tool()
-async def add_document_url(
+async def add_document_url_tool(
     url: str,
     name: Optional[str] = None,
     agent_id: Optional[str] = None
@@ -79,117 +95,18 @@ async def add_document_url(
     Add a document to the knowledge base from a URL.
     
     Args:
-        url: Web page URL to add (must include protocol)
-        name: Document name (auto-generated from URL if not provided)
-        agent_id: Optional agent to attach document to (format: agent_XXXX)
+        url: Web page URL to add
+        name: Document name (auto-generated if not provided)
+        agent_id: Optional agent to attach document to
     
     Returns:
         Document ID and details
-    
-    Examples:
-        add_document_url("https://docs.example.com/guide")
-        add_document_url("https://api.docs.com", name="API Documentation")
-        add_document_url("https://help.site.com", agent_id="agent_abc123")
-    
-    Supported URL Types:
-        - Web pages (HTML)
-        - PDF documents
-        - Plain text files
-        - Markdown files
-    
-    Size Limits:
-        - Maximum page size: 10MB
-        - Processing timeout: 30 seconds
-    
-    API Endpoint: POST /convai/knowledge-base
     """
-    # Validate URL
-    if not url:
-        return format_error(
-            "URL is required",
-            "Provide a valid URL starting with http:// or https://"
-        )
-    
-    # Check URL format
-    from urllib.parse import urlparse
-    try:
-        parsed = urlparse(url)
-        if not parsed.scheme:
-            return format_error(
-                "URL missing protocol",
-                f"Add http:// or https:// to the URL: https://{url}"
-            )
-        if parsed.scheme not in ['http', 'https']:
-            return format_error(
-                f"Invalid URL protocol: {parsed.scheme}",
-                "URL must start with http:// or https://"
-            )
-        if not parsed.netloc:
-            return format_error(
-                "Invalid URL format",
-                "Provide a complete URL like https://example.com/page"
-            )
-    except Exception:
-        return format_error(
-            "Invalid URL format",
-            "Provide a valid URL like https://example.com"
-        )
-    
-    # Validate agent_id if provided
-    if agent_id:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error(
-                f"Invalid agent ID format: {agent_id}",
-                "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-            )
-    
-    try:
-        # Auto-generate name from URL if not provided
-        if not name:
-            # Create readable name from URL
-            name = parsed.netloc.replace("www.", "")
-            if parsed.path and parsed.path != "/":
-                path_name = parsed.path.strip("/").replace("/", "_").replace("-", "_")
-                name = f"{name}_{path_name}"
-            # Limit name length
-            if len(name) > 100:
-                name = name[:100]
-        
-        result = await client.add_document_url(name, url)
-        
-        response_data = {
-            "document_id": result.get("id"),
-            "name": name,
-            "url": url,
-            "status": "processing"
-        }
-        
-        # Attach to agent if specified
-        if agent_id:
-            response_data["attached_to_agent"] = agent_id
-        
-        return format_success(
-            f"Document '{name}' added from URL",
-            response_data
-        )
-    except Exception as e:
-        logger.error(f"Failed to add document from URL: {e}")
-        error_msg = str(e)
-        
-        if "timeout" in error_msg.lower():
-            suggestion = "URL took too long to load. Check if the site is accessible"
-        elif "size" in error_msg.lower():
-            suggestion = "Document too large. Maximum size is 10MB"
-        elif "404" in error_msg or "not found" in error_msg.lower():
-            suggestion = f"URL {url} not found. Verify the URL is correct"
-        else:
-            suggestion = "Check URL is accessible and not behind authentication"
-            
-        return format_error(error_msg, suggestion)
+    return await add_document_url(client, url, name, agent_id)
 
 
 @mcp.tool()
-async def add_document_text(
+async def add_document_text_tool(
     text: str,
     name: str,
     agent_id: Optional[str] = None
@@ -198,99 +115,18 @@ async def add_document_text(
     Add a text document to the knowledge base.
     
     Args:
-        text: Document content (plain text or markdown)
-        name: Document name (descriptive identifier)
-        agent_id: Optional agent to attach to (format: agent_XXXX)
+        text: Document content
+        name: Document name
+        agent_id: Optional agent to attach to
     
     Returns:
         Document ID and details
-    
-    Examples:
-        add_document_text("Product specs: ...", "Product Documentation")
-        add_document_text(faq_content, "FAQ", agent_id="agent_abc123")
-    
-    Content Guidelines:
-        - Minimum length: 10 characters
-        - Maximum length: 500,000 characters (~100 pages)
-        - Supports plain text and markdown formatting
-        - UTF-8 encoding required
-    
-    Chunking Info:
-        - Default chunk size: 512 characters
-        - Chunks have 50 character overlap
-        - Long documents automatically split for indexing
-    
-    API Endpoint: POST /convai/knowledge-base
     """
-    # Validate inputs
-    if not text or not text.strip():
-        return format_error(
-            "Document text cannot be empty",
-            "Provide document content to add to the knowledge base"
-        )
-    
-    if len(text) < 10:
-        return format_error(
-            "Document text too short",
-            "Provide at least 10 characters of content"
-        )
-    
-    if len(text) > 500000:
-        return format_error(
-            f"Document too large ({len(text)} characters)",
-            "Maximum document size is 500,000 characters. Consider splitting into multiple documents"
-        )
-    
-    if not name or not name.strip():
-        return format_error(
-            "Document name is required",
-            "Provide a descriptive name for the document"
-        )
-    
-    if len(name) > 200:
-        return format_error(
-            f"Document name too long ({len(name)} characters)",
-            "Use a name under 200 characters"
-        )
-    
-    # Validate agent_id if provided
-    if agent_id:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error(
-                f"Invalid agent ID format: {agent_id}",
-                "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-            )
-    
-    try:
-        result = await client.add_document_text(name, text)
-        
-        # Calculate chunking info
-        chunk_size = 512
-        chunk_overlap = 50
-        estimated_chunks = max(1, (len(text) - chunk_overlap) // (chunk_size - chunk_overlap) + 1)
-        
-        response_data = {
-            "document_id": result.get("id"),
-            "name": name,
-            "character_count": len(text),
-            "estimated_chunks": estimated_chunks,
-            "processing_status": "indexing"
-        }
-        
-        if agent_id:
-            response_data["attached_to_agent"] = agent_id
-        
-        return format_success(
-            f"Document '{name}' added ({len(text)} characters)",
-            response_data
-        )
-    except Exception as e:
-        logger.error(f"Failed to add text document: {e}")
-        return format_error(str(e))
+    return await add_document_text(client, text, name, agent_id)
 
 
 @mcp.tool()
-async def list_documents(
+async def list_documents_tool(
     agent_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -302,23 +138,11 @@ async def list_documents(
     Returns:
         List of documents with metadata
     """
-    try:
-        documents = await client.list_knowledge_base(agent_id)
-        return format_success(
-            f"Found {len(documents)} documents",
-            {
-                "count": len(documents),
-                "documents": documents,
-                "agent_filter": agent_id
-            }
-        )
-    except Exception as e:
-        logger.error(f"Failed to list documents: {e}")
-        return format_error(str(e))
+    return await list_documents(client, agent_id)
 
 
 @mcp.tool()
-async def delete_document(document_id: str) -> Dict[str, Any]:
+async def delete_document_tool(document_id: str) -> Dict[str, Any]:
     """
     Delete a document from the knowledge base.
     
@@ -328,118 +152,11 @@ async def delete_document(document_id: str) -> Dict[str, Any]:
     Returns:
         Deletion confirmation
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        await client.delete_document(document_id)
-        return format_success(f"Document {document_id} deleted successfully")
-    except Exception as e:
-        logger.error(f"Failed to delete document {document_id}: {e}")
-        return format_error(str(e))
-
-
-# ============================================================
-# RAG Configuration Tools
-# ============================================================
-
-@mcp.tool()
-async def configure_rag(
-    agent_id: str,
-    enabled: Optional[bool] = True,
-    embedding_model: Optional[str] = "e5_mistral_7b_instruct", 
-    max_documents_length: Optional[str] = "10000"
-) -> Dict[str, Any]:
-    """
-    Configure RAG settings for an agent.
-    
-    Args:
-        agent_id: Agent to configure (format: agent_XXXX or UUID)
-        enabled: Whether to enable RAG for this agent (default: True)
-        embedding_model: Model for vector embeddings (default: "e5_mistral_7b_instruct")
-        max_documents_length: Maximum length for documents (default: "10000")
-    
-    Returns:
-        Configuration result with RAG settings applied
-        
-    Example:
-        configure_rag("agent_abc123", enabled=True, max_documents_length="15000")
-        
-    Note:
-        - RAG enhances agent responses with knowledge base content
-        - Different embedding models may provide different performance
-        - Larger max_documents_length increases context but may impact latency
-    """
-    if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error("Invalid agent ID format")
-    
-    try:
-        # Convert and validate max_documents_length
-        max_docs_int = 10000  # default
-        if max_documents_length is not None:
-            try:
-                max_docs_int = int(max_documents_length)
-                if max_docs_int < 1000 or max_docs_int > 50000:
-                    return format_error("max_documents_length must be between 1000 and 50000")
-            except (ValueError, TypeError):
-                return format_error("max_documents_length must be a valid integer")
-        
-        # Build RAG configuration according to ElevenLabs API
-        rag_config = {
-            "enabled": enabled if enabled is not None else True,
-            "embedding_model": embedding_model or "e5_mistral_7b_instruct",
-            "max_documents_length": max_docs_int
-        }
-        
-        # Note: This would call the actual RAG configuration endpoint
-        return format_success(
-            f"RAG configured for agent {agent_id}",
-            {"rag_config": rag_config}
-        )
-    except Exception as e:
-        logger.error(f"Failed to configure RAG: {e}")
-        return format_error(str(e))
+    return await delete_document(client, document_id)
 
 
 @mcp.tool()
-async def rebuild_index(
-    agent_id: str,
-    force: bool = False
-) -> Dict[str, Any]:
-    """
-    Rebuild the search index for an agent's knowledge base.
-    
-    Args:
-        agent_id: Agent whose index to rebuild
-        force: Force rebuild even if current
-    
-    Returns:
-        Index rebuild status
-    """
-    if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error("Invalid agent ID format")
-    
-    try:
-        # Note: This would call the actual index rebuild endpoint
-        return format_success(
-            f"Index rebuild initiated for agent {agent_id}",
-            {
-                "status": "rebuilding",
-                "estimated_time_seconds": 60,
-                "force": force
-            }
-        )
-    except Exception as e:
-        logger.error(f"Failed to rebuild index: {e}")
-        return format_error(str(e))
-
-
-# ============================================================
-# Document Management Tools
-# ============================================================
-
-@mcp.tool()
-async def get_document(document_id: str) -> Dict[str, Any]:
+async def get_document_tool(document_id: str) -> Dict[str, Any]:
     """
     Get document details from knowledge base.
     
@@ -449,22 +166,11 @@ async def get_document(document_id: str) -> Dict[str, Any]:
     Returns:
         Document metadata and content info
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        result = await client._request("GET", f"/convai/knowledge-base/{document_id}")
-        return format_success(
-            "Document retrieved",
-            {"document": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to get document: {e}")
-        return format_error(str(e))
+    return await get_document(client, document_id)
 
 
 @mcp.tool()
-async def update_document(
+async def update_document_tool(
     document_id: str,
     name: Optional[str] = None,
     metadata: Optional[Dict[str, Any]] = None
@@ -480,33 +186,11 @@ async def update_document(
     Returns:
         Updated document details
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        update_data = {}
-        if name:
-            update_data["name"] = name
-        if metadata:
-            update_data["metadata"] = metadata
-            
-        result = await client._request(
-            "PATCH",
-            f"/convai/knowledge-base/{document_id}",
-            json_data=update_data
-        )
-        
-        return format_success(
-            "Document updated",
-            {"document": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to update document: {e}")
-        return format_error(str(e))
+    return await update_document(client, document_id, name, metadata)
 
 
 @mcp.tool()
-async def add_document_file(
+async def add_document_file_tool(
     file_path: str,
     name: str,
     agent_id: Optional[str] = None,
@@ -524,33 +208,11 @@ async def add_document_file(
     Returns:
         Document ID and upload status
     """
-    try:
-        # Note: File upload requires multipart form data
-        # This is a simplified implementation
-        with open(file_path, 'rb') as f:
-            files = {"file": (name, f, "application/octet-stream")}
-            data = {"metadata": metadata} if metadata else {}
-            if agent_id:
-                data["agent_id"] = agent_id
-                
-            result = await client._request(
-                "POST",
-                "/convai/knowledge-base/file",
-                files=files,
-                json_data=data
-            )
-        
-        return format_success(
-            f"Document '{name}' uploaded",
-            {"document": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to upload file: {e}")
-        return format_error(str(e))
+    return await add_document_file(client, file_path, name, agent_id, metadata)
 
 
 @mcp.tool()
-async def get_document_content(document_id: str) -> Dict[str, Any]:
+async def get_document_content_tool(document_id: str) -> Dict[str, Any]:
     """
     Get full content of a document.
     
@@ -560,22 +222,11 @@ async def get_document_content(document_id: str) -> Dict[str, Any]:
     Returns:
         Document content
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        result = await client._request("GET", f"/convai/knowledge-base/{document_id}/content")
-        return format_success(
-            "Document content retrieved",
-            {"content": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to get document content: {e}")
-        return format_error(str(e))
+    return await get_document_content(client, document_id)
 
 
 @mcp.tool()
-async def get_document_chunk(
+async def get_document_chunk_tool(
     document_id: str,
     chunk_id: str
 ) -> Dict[str, Any]:
@@ -589,29 +240,55 @@ async def get_document_chunk(
     Returns:
         Chunk content and metadata
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        result = await client._request(
-            "GET",
-            f"/convai/knowledge-base/{document_id}/chunks/{chunk_id}"
-        )
-        return format_success(
-            "Chunk retrieved",
-            {"chunk": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to get document chunk: {e}")
-        return format_error(str(e))
+    return await get_document_chunk(client, document_id, chunk_id)
 
 
 # ============================================================
-# RAG Index Management Tools
+# RAG Configuration Tools
 # ============================================================
 
 @mcp.tool()
-async def compute_rag_index(
+async def configure_rag_tool(
+    agent_id: str,
+    enabled: Optional[bool] = True,
+    embedding_model: Optional[str] = "e5_mistral_7b_instruct", 
+    max_documents_length: Optional[str] = "10000"
+) -> Dict[str, Any]:
+    """
+    Configure RAG settings for an agent.
+    
+    Args:
+        agent_id: Agent to configure (format: agent_XXXX or UUID)
+        enabled: Whether to enable RAG for this agent (default: True)
+        embedding_model: Model for vector embeddings (default: "e5_mistral_7b_instruct")
+        max_documents_length: Maximum length for documents (default: "10000")
+    
+    Returns:
+        Configuration result with RAG settings applied
+    """
+    return await configure_rag(client, agent_id, enabled, embedding_model, max_documents_length)
+
+
+@mcp.tool()
+async def rebuild_index_tool(
+    agent_id: str,
+    force: bool = False
+) -> Dict[str, Any]:
+    """
+    Rebuild the search index for an agent's knowledge base.
+    
+    Args:
+        agent_id: Agent whose index to rebuild
+        force: Force rebuild even if current
+    
+    Returns:
+        Index rebuild status
+    """
+    return await rebuild_index(client, agent_id, force)
+
+
+@mcp.tool()
+async def compute_rag_index_tool(
     document_id: str,
     embedding_model: Optional[str] = "e5_mistral_7b_instruct"
 ) -> Dict[str, Any]:
@@ -625,27 +302,11 @@ async def compute_rag_index(
     Returns:
         Indexing status
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        result = await client._request(
-            "POST",
-            f"/convai/knowledge-base/{document_id}/compute-rag-index",
-            json_data={"embedding_model": embedding_model}
-        )
-        
-        return format_success(
-            "RAG index computation started",
-            {"index": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to compute RAG index: {e}")
-        return format_error(str(e))
+    return await compute_rag_index(client, document_id, embedding_model)
 
 
 @mcp.tool()
-async def get_rag_index(document_id: str) -> Dict[str, Any]:
+async def get_rag_index_tool(document_id: str) -> Dict[str, Any]:
     """
     Get RAG index details for a document.
     
@@ -655,22 +316,11 @@ async def get_rag_index(document_id: str) -> Dict[str, Any]:
     Returns:
         Index configuration and status
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        result = await client._request("GET", f"/convai/knowledge-base/{document_id}/rag-index")
-        return format_success(
-            "RAG index retrieved",
-            {"index": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to get RAG index: {e}")
-        return format_error(str(e))
+    return await get_rag_index(client, document_id)
 
 
 @mcp.tool()
-async def get_rag_index_overview(document_id: str) -> Dict[str, Any]:
+async def get_rag_index_overview_tool(document_id: str) -> Dict[str, Any]:
     """
     Get RAG index statistics and overview.
     
@@ -680,25 +330,11 @@ async def get_rag_index_overview(document_id: str) -> Dict[str, Any]:
     Returns:
         Index statistics and metadata
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        result = await client._request(
-            "GET",
-            f"/convai/knowledge-base/{document_id}/rag-index-overview"
-        )
-        return format_success(
-            "RAG index overview retrieved",
-            {"overview": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to get RAG index overview: {e}")
-        return format_error(str(e))
+    return await get_rag_index_overview(client, document_id)
 
 
 @mcp.tool()
-async def delete_rag_index(document_id: str) -> Dict[str, Any]:
+async def delete_rag_index_tool(document_id: str) -> Dict[str, Any]:
     """
     Delete RAG index for a document.
     
@@ -708,15 +344,7 @@ async def delete_rag_index(document_id: str) -> Dict[str, Any]:
     Returns:
         Deletion confirmation
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        await client._request("DELETE", f"/convai/knowledge-base/{document_id}/rag-index")
-        return format_success(f"RAG index deleted for document {document_id}")
-    except Exception as e:
-        logger.error(f"Failed to delete RAG index: {e}")
-        return format_error(str(e))
+    return await delete_rag_index(client, document_id)
 
 
 # ============================================================
@@ -724,7 +352,7 @@ async def delete_rag_index(document_id: str) -> Dict[str, Any]:
 # ============================================================
 
 @mcp.tool()
-async def get_dependent_agents(document_id: str) -> Dict[str, Any]:
+async def get_dependent_agents_tool(document_id: str) -> Dict[str, Any]:
     """
     Get agents that depend on this document.
     
@@ -734,27 +362,11 @@ async def get_dependent_agents(document_id: str) -> Dict[str, Any]:
     Returns:
         List of dependent agents
     """
-    if not validate_elevenlabs_id(document_id, 'document'):
-        return format_error("Invalid document ID format")
-    
-    try:
-        result = await client._request(
-            "GET",
-            f"/convai/knowledge-base/{document_id}/dependent-agents"
-        )
-        agents = result.get("agents", [])
-        
-        return format_success(
-            f"Found {len(agents)} dependent agents",
-            {"agents": agents, "count": len(agents)}
-        )
-    except Exception as e:
-        logger.error(f"Failed to get dependent agents: {e}")
-        return format_error(str(e))
+    return await get_dependent_agents(client, document_id)
 
 
 @mcp.tool()
-async def get_knowledge_base_size(agent_id: str) -> Dict[str, Any]:
+async def get_knowledge_base_size_tool(agent_id: str) -> Dict[str, Any]:
     """
     Get knowledge base size and statistics for a specific agent.
     
@@ -764,55 +376,89 @@ async def get_knowledge_base_size(agent_id: str) -> Dict[str, Any]:
     Returns:
         Storage metrics and document counts
     """
-    if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error(
-            f"Invalid agent ID format: {agent_id}",
-            "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        result = await client._request("GET", f"/convai/agent/{agent_id}/knowledge-base/size")
-        return format_success(
-            "Knowledge base statistics retrieved",
-            {"statistics": result}
-        )
-    except Exception as e:
-        logger.error(f"Failed to get knowledge base size: {e}")
-        return format_error(str(e))
+    return await get_knowledge_base_size(client, agent_id)
 
 
 # ============================================================
-# Conversation Management Tools
-# ============================================================
-# Main entry point
+# Resources
 # ============================================================
 
-if __name__ == "__main__":
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="ElevenLabs Knowledge MCP Server")
-    parser.add_argument("--test", action="store_true", help="Test mode")
-    args = parser.parse_args()
-    
-    if args.test:
-        # Test mode - verify all components
-        print(f"Server: elevenlabs-knowledge v0.1.0")
-        print(f"Tools: {len(mcp.tools)}")
-        print(f"Config: API key {Config.mask_api_key()}")
-        print("All components loaded successfully!")
-    else:
-        # Run server
-        logger.info("Starting MCP server...")
-        mcp.run()
+@mcp.resource("resource://documentation")
+async def get_documentation() -> str:
+    """Get server documentation."""
+    return """
+# ElevenLabs Knowledge MCP Server
 
-# REMOVED_DUPLICATE_CONVERSATION_TOOLS
-# The following tools were removed as they are duplicated in elevenlabs-conversations:
-# - list_conversations
-# - get_conversation  
-# - get_transcript
-# - analyze_conversation
-# - performance_report
-# - export_conversations
+Manage knowledge base documents, RAG configuration, and analytics.
+
+## Features
+
+### Document Management
+- Add documents from URLs or text
+- List, get, update, and delete documents
+- Upload files to knowledge base
+- Retrieve document content and chunks
+
+### RAG Configuration
+- Configure RAG settings for agents
+- Rebuild search indexes
+- Compute and manage RAG indexes
+- Get index statistics and overviews
+
+### Analytics
+- Get dependent agents for documents
+- View knowledge base statistics
+
+## Tool Categories
+
+### Document Tools (9 tools)
+- add_document_url: Add from web URLs
+- add_document_text: Add text documents
+- list_documents: Browse knowledge base
+- delete_document: Remove documents
+- get_document: Get document details
+- update_document: Update metadata
+- add_document_file: Upload files
+- get_document_content: Get full content
+- get_document_chunk: Get specific chunks
+
+### RAG Tools (6 tools)
+- configure_rag: Setup RAG for agents
+- rebuild_index: Rebuild search index
+- compute_rag_index: Create document index
+- get_rag_index: Get index details
+- get_rag_index_overview: View statistics
+- delete_rag_index: Remove indexes
+
+### Analytics Tools (2 tools)
+- get_dependent_agents: Find agent dependencies
+- get_knowledge_base_size: View storage metrics
+
+## Usage Examples
+
+### Add Document from URL
+```python
+add_document_url(
+    url="https://docs.example.com/guide",
+    name="API Guide",
+    agent_id="agent_abc123"
+)
+```
+
+### Configure RAG
+```python
+configure_rag(
+    agent_id="agent_xyz789",
+    enabled=True,
+    max_documents_length="15000"
+)
+```
+
+### Get Knowledge Base Stats
+```python
+get_knowledge_base_size("agent_abc123")
+```
+"""
 
 
 # ============================================================
@@ -836,4 +482,5 @@ if __name__ == "__main__":
     else:
         # Run server
         logger.info("Starting MCP server...")
-        mcp.run()
+        import uvicorn
+        uvicorn.run(mcp, host="0.0.0.0", port=8000)

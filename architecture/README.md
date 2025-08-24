@@ -94,6 +94,39 @@ This directory contains comprehensive architecture documents for all proposed El
 3. **elevenlabs-voices** - Advanced voice management and customization
 4. **elevenlabs-admin** - Team and enterprise features
 
+## 📁 Modular Tool Organization
+
+### Audio Server Modules
+- `tts_tools.py` - Text-to-Speech generation
+- `stt_tools.py` - Speech-to-Text transcription
+- `voice_transform_tools.py` - Voice conversion
+- `generation_tools.py` - Sound & music generation
+- `dialogue_tools.py` - Multi-voice dialogues
+- `audio_utils_tools.py` - Audio processing utilities
+
+### Voices Server Modules
+- `voice_management.py` - CRUD operations
+- `voice_cloning.py` - Instant & professional cloning
+- `voice_generation.py` - Text-to-voice creation
+- `voice_library.py` - Community & sharing
+- `voice_settings.py` - Configuration & presets
+
+### Analytics Server Modules
+- `subscription_tools.py` - User & subscription info
+- `usage_tools.py` - Usage statistics tracking
+- `history_tools.py` - Generation history
+- `billing_tools.py` - Invoices & payments
+- `analytics_tools.py` - Advanced analytics
+- `export_tools.py` - Report generation
+
+### Admin Server Modules
+- `workspace_tools.py` - Workspace configuration
+- `member_tools.py` - Member management
+- `group_tools.py` - Permission groups
+- `service_account_tools.py` - API key management
+- `dictionary_tools.py` - Pronunciation rules
+- `webhook_tools.py` - Event webhooks
+
 ## 🔑 Key API Endpoints Summary
 
 ### Audio Server (87 endpoints)
@@ -144,36 +177,113 @@ All servers use the same authentication:
 - **Headers**: `xi-api-key: YOUR_API_KEY`
 - **Workspace**: Some endpoints require workspace admin permissions
 
+## 🏗️ Modular Architecture Pattern
+
+All servers follow the FastMCP structured template pattern for better maintainability and deployment:
+
+### Directory Structure
+```
+elevenlabs-{server}/
+├── src/
+│   ├── server.py           # Main FastMCP server with tool registration
+│   ├── utils.py            # Self-contained utilities (NO external deps)
+│   └── tools/
+│       ├── __init__.py
+│       ├── {category1}_tools.py  # Focused tool modules
+│       ├── {category2}_tools.py  # Each module handles specific domain
+│       └── ...
+├── requirements.txt        # PyPI packages only (no local deps)
+├── .env.example
+└── README.md
+```
+
+### Key Principles
+
+1. **Self-Contained Servers**: Each server is completely independent
+2. **Modular Tools**: Tools organized by functionality into separate modules
+3. **Embedded Utils**: All utilities in a single `utils.py` file per server
+4. **No Cross-Dependencies**: Servers cannot import from each other
+5. **PyPI Only**: Requirements must only contain PyPI packages
+
 ## 🚀 Quick Start Implementation
 
 For each server:
 
-1. **Create server structure**:
+1. **Create modular structure**:
 ```bash
-mkdir elevenlabs-{server}
+mkdir -p elevenlabs-{server}/src/tools
 cd elevenlabs-{server}
-touch src/server.py src/tools.py src/utils.py
+touch src/server.py src/utils.py
+touch src/tools/__init__.py
 touch requirements.txt .env.example README.md
 ```
 
-2. **Base server template**:
+2. **Server template with modular registration**:
 ```python
+# server.py
 from fastmcp import FastMCP
-from dotenv import load_dotenv
-import os
+from utils import Config, ElevenLabsClient
 
-load_dotenv()
+# Import tool modules
+from tools import module1, module2, module3
 
-mcp = FastMCP(
-    name="elevenlabs-{server}",
-    description="ElevenLabs {Server} MCP Server"
-)
+# Initialize - MUST be at module level for FastMCP Cloud
+mcp = FastMCP(name="elevenlabs-{server}")
+client = ElevenLabsClient(Config.API_KEY)
 
-# Import and register tools
-from tools import *
+# Register tools from modules
+@mcp.tool()
+async def tool_name(param: str):
+    return await module1.tool_name(client, param)
+
+# More tool registrations...
 
 if __name__ == "__main__":
     mcp.run()
+```
+
+3. **Self-contained utils.py template**:
+```python
+# utils.py - All utilities for this server
+import os
+import logging
+from typing import Dict, Any, Optional
+import aiohttp
+
+class Config:
+    """Configuration from environment."""
+    API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+    API_BASE_URL = "https://api.elevenlabs.io/v1"
+    
+    @classmethod
+    def validate(cls):
+        if not cls.API_KEY:
+            raise ValueError("ELEVENLABS_API_KEY required")
+
+class ElevenLabsClient:
+    """API client for this server."""
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = Config.API_BASE_URL
+        self._session = None
+    
+    # Server-specific API methods...
+
+# Server-specific utilities...
+def format_response(data: Any) -> Dict[str, Any]:
+    return {"success": True, "data": data}
+```
+
+4. **Tool module template**:
+```python
+# tools/category_tools.py
+"""Category-specific tools."""
+
+async def tool_function(client, param1, param2=None):
+    """Tool implementation."""
+    # Use client to make API calls
+    response = await client.api_method(param1, param2)
+    return format_response(response)
 ```
 
 3. **Environment setup**:
@@ -181,6 +291,26 @@ if __name__ == "__main__":
 ELEVENLABS_API_KEY=your_api_key_here
 DEFAULT_OUTPUT_DIR=/path/to/output
 ```
+
+## 🎯 Benefits of Modular Architecture
+
+### Development Benefits
+- **Easier Testing**: Each module can be tested independently
+- **Better Organization**: Clear separation of concerns
+- **Parallel Development**: Multiple developers can work on different modules
+- **Code Reusability**: Common patterns in utils.py
+
+### Deployment Benefits
+- **FastMCP Cloud Ready**: Self-contained servers work perfectly with FastMCP Cloud
+- **No Dependency Conflicts**: Each server has isolated dependencies
+- **Simple Updates**: Update individual modules without affecting others
+- **Easy Debugging**: Issues isolated to specific modules
+
+### Maintenance Benefits
+- **Clear Structure**: Easy to understand and navigate
+- **Focused Changes**: Modifications limited to relevant modules
+- **Better Documentation**: Each module has clear purpose
+- **Consistent Patterns**: Same structure across all servers
 
 ## 📈 Metrics & Success Criteria
 

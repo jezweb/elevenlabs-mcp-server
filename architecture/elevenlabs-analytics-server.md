@@ -3,6 +3,26 @@
 ## Overview
 The `elevenlabs-analytics` MCP server provides comprehensive usage analytics, billing information, generation history tracking, and monitoring capabilities for ElevenLabs API usage.
 
+## Directory Structure (Modular)
+
+```
+elevenlabs-analytics/
+├── src/
+│   ├── server.py           # Main FastMCP server with tool registration
+│   ├── utils.py            # Self-contained utilities (client, config, validation)
+│   └── tools/
+│       ├── __init__.py
+│       ├── subscription_tools.py    # User & subscription management
+│       ├── usage_tools.py          # Usage statistics and tracking
+│       ├── history_tools.py        # Generation history management
+│       ├── billing_tools.py        # Invoices and payment tracking
+│       ├── analytics_tools.py      # Advanced analytics and reporting
+│       └── export_tools.py         # Data export and reporting
+├── requirements.txt
+├── .env.example
+└── README.md
+```
+
 ## API Endpoints
 
 ### 1. User & Subscription
@@ -272,103 +292,168 @@ The `elevenlabs-analytics` MCP server provides comprehensive usage analytics, bi
   - `start_after_activity_id` (query, optional): Pagination cursor
 - **Response**: Activity log entries
 
-## Tool Implementations
+## Modular Tool Implementation
 
-### Core Tools
+### Tool Modules
+
+#### 1. subscription_tools.py
+```python
+"""User and subscription management tools."""
+
+async def get_user_info(client):
+    """Get current user information."""
+    
+async def get_subscription_info(client):
+    """Get subscription details and quotas."""
+    
+async def get_quota_status(client):
+    """Get current quota usage and limits."""
+    
+async def check_subscription_limits(client):
+    """Check if approaching any limits."""
+```
+
+#### 2. usage_tools.py
+```python
+"""Usage statistics and tracking tools."""
+
+async def get_character_usage(client, start_date, end_date, breakdown_by=None, aggregation="day"):
+    """Get character usage statistics."""
+    
+async def get_tts_usage(client, start_date, end_date, breakdown_by=None):
+    """Get text-to-speech usage stats."""
+    
+async def get_sts_usage(client, start_date, end_date, breakdown_by=None):
+    """Get speech-to-speech usage stats."""
+    
+async def get_vc_usage(client, start_date, end_date, breakdown_by=None):
+    """Get voice cloning usage stats."""
+    
+async def get_usage_summary(client, days=30):
+    """Get usage summary for the last N days."""
+```
+
+#### 3. history_tools.py
+```python
+"""Generation history management tools."""
+
+async def get_generation_history(client, page_size=100, voice_id=None, search=None, start_date=None, end_date=None):
+    """Get audio generation history."""
+    
+async def get_history_item(client, history_item_id):
+    """Get specific history item details."""
+    
+async def download_history_audio(client, history_item_id, output_directory=None):
+    """Download audio for history item."""
+    
+async def delete_history_item(client, history_item_id):
+    """Delete a history item."""
+    
+async def batch_download_history(client, history_item_ids, output_format=None):
+    """Download multiple history items as ZIP."""
+```
+
+#### 4. billing_tools.py
+```python
+"""Billing and invoice management tools."""
+
+async def get_invoices(client, page_size=20):
+    """Get billing invoices."""
+    
+async def get_invoice_details(client, invoice_id):
+    """Get specific invoice details."""
+    
+async def get_payment_methods(client):
+    """Get configured payment methods."""
+    
+async def get_billing_summary(client, months=6):
+    """Get billing summary for recent months."""
+```
+
+#### 5. analytics_tools.py
+```python
+"""Advanced analytics and insights tools."""
+
+async def analyze_voice_usage(client, voice_id, days=30):
+    """Analyze usage for specific voice."""
+    
+async def get_cost_breakdown(client, start_date, end_date):
+    """Get cost breakdown by feature."""
+    
+async def predict_usage(client, days_ahead=7):
+    """Predict future usage based on trends."""
+    
+async def get_workspace_usage(client, start_unix, end_unix, breakdown_by_user=False):
+    """Get workspace-wide usage statistics."""
+    
+async def get_workspace_activity(client, page_size=50):
+    """Get workspace activity log."""
+    
+async def analyze_trends(client, metric="characters", period="month"):
+    """Analyze usage trends over time."""
+```
+
+#### 6. export_tools.py
+```python
+"""Data export and reporting tools."""
+
+async def export_usage_report(client, start_date, end_date, format="csv"):
+    """Export usage report."""
+    
+async def generate_monthly_report(client, year, month):
+    """Generate comprehensive monthly report."""
+    
+async def export_history_data(client, filters=None, format="json"):
+    """Export generation history data."""
+    
+async def create_dashboard_data(client):
+    """Create data for dashboard visualization."""
+```
+
+### Tool Registration (server.py)
 
 ```python
+from fastmcp import FastMCP
+from utils import Config, ElevenLabsClient
+
+# Import all tool modules
+from tools import (
+    subscription_tools,
+    usage_tools,
+    history_tools,
+    billing_tools,
+    analytics_tools,
+    export_tools
+)
+
+# Initialize
+mcp = FastMCP(name="elevenlabs-analytics")
+client = ElevenLabsClient(Config.API_KEY)
+
+# Register subscription tools
 @mcp.tool()
-async def get_subscription_info() -> Dict[str, Any]:
-    """Get current subscription details and quotas."""
+async def get_subscription_info():
+    return await subscription_tools.get_subscription_info(client)
 
 @mcp.tool()
-async def get_character_usage(
-    start_date: str,
-    end_date: str,
-    breakdown_by: Optional[str] = None,
-    aggregation: str = "day"
-) -> Dict[str, Any]:
-    """Get character usage statistics."""
+async def get_quota_status():
+    return await subscription_tools.get_quota_status(client)
+
+# Register usage tools
+@mcp.tool()
+async def get_character_usage(start_date: str, end_date: str, breakdown_by: str = None, aggregation: str = "day"):
+    return await usage_tools.get_character_usage(client, start_date, end_date, breakdown_by, aggregation)
 
 @mcp.tool()
-async def get_usage_summary(
-    days: int = 30
-) -> Dict[str, Any]:
-    """Get usage summary for the last N days."""
+async def get_usage_summary(days: int = 30):
+    return await usage_tools.get_usage_summary(client, days)
 
+# Register history tools
 @mcp.tool()
-async def get_generation_history(
-    page_size: int = 100,
-    voice_id: Optional[str] = None,
-    search: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None
-) -> Dict[str, Any]:
-    """Get audio generation history."""
+async def get_generation_history(page_size: int = 100, voice_id: str = None, search: str = None):
+    return await history_tools.get_generation_history(client, page_size, voice_id, search)
 
-@mcp.tool()
-async def get_history_item(
-    history_item_id: str,
-    include_audio: bool = False
-) -> Dict[str, Any]:
-    """Get specific history item details."""
-
-@mcp.tool()
-async def download_history_audio(
-    history_item_id: str,
-    output_directory: Optional[str] = None
-) -> Dict[str, Any]:
-    """Download audio for history item."""
-
-@mcp.tool()
-async def delete_history_item(
-    history_item_id: str
-) -> Dict[str, Any]:
-    """Delete a history item."""
-
-@mcp.tool()
-async def get_invoices(
-    page_size: int = 20
-) -> Dict[str, Any]:
-    """Get billing invoices."""
-
-@mcp.tool()
-async def get_invoice_details(
-    invoice_id: str
-) -> Dict[str, Any]:
-    """Get specific invoice details."""
-
-@mcp.tool()
-async def analyze_voice_usage(
-    voice_id: str,
-    days: int = 30
-) -> Dict[str, Any]:
-    """Analyze usage for specific voice."""
-
-@mcp.tool()
-async def get_cost_breakdown(
-    start_date: str,
-    end_date: str
-) -> Dict[str, Any]:
-    """Get cost breakdown by feature."""
-
-@mcp.tool()
-async def export_usage_report(
-    start_date: str,
-    end_date: str,
-    format: str = "csv"
-) -> Dict[str, Any]:
-    """Export usage report."""
-
-@mcp.tool()
-async def get_quota_status() -> Dict[str, Any]:
-    """Get current quota usage and limits."""
-
-@mcp.tool()
-async def predict_usage(
-    days_ahead: int = 7
-) -> Dict[str, Any]:
-    """Predict future usage based on trends."""
+# ... register remaining tools ...
 ```
 
 ## Resources
@@ -493,8 +578,338 @@ result = await export_usage_report(
 - Custom dashboards
 - Alert notifications
 
+## Self-Contained Utils Module
+
+```python
+"""
+utils.py - All utilities for the analytics server
+"""
+
+import os
+import logging
+from typing import Dict, Any, Optional, List
+from datetime import datetime, timedelta
+import asyncio
+import aiohttp
+from functools import lru_cache
+import pandas as pd
+import json
+
+logger = logging.getLogger(__name__)
+
+# ============================================================
+# Configuration
+# ============================================================
+
+class Config:
+    """Configuration from environment variables."""
+    API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+    API_BASE_URL = "https://api.elevenlabs.io/v1"
+    
+    # Analytics settings
+    DEFAULT_PAGE_SIZE = int(os.getenv("DEFAULT_PAGE_SIZE", "100"))
+    HISTORY_RETENTION_DAYS = int(os.getenv("HISTORY_RETENTION_DAYS", "90"))
+    REPORT_OUTPUT_DIR = os.getenv("REPORT_OUTPUT_DIR", "./reports")
+    TIMEZONE = os.getenv("TIMEZONE", "UTC")
+    
+    # Cache settings
+    CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))  # 5 minutes
+    
+    # Export settings
+    MAX_EXPORT_ROWS = int(os.getenv("MAX_EXPORT_ROWS", "10000"))
+    EXPORT_BATCH_SIZE = int(os.getenv("EXPORT_BATCH_SIZE", "500"))
+    
+    @classmethod
+    def validate(cls):
+        if not cls.API_KEY:
+            raise ValueError("ELEVENLABS_API_KEY environment variable is required")
+
+# ============================================================
+# API Client
+# ============================================================
+
+class ElevenLabsClient:
+    """Analytics-focused API client."""
+    
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = Config.API_BASE_URL
+        self._session = None
+        self._usage_cache = {}
+        self._cache_timestamps = {}
+    
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if not self._session:
+            self._session = aiohttp.ClientSession(
+                headers={
+                    "xi-api-key": self.api_key,
+                    "Content-Type": "application/json"
+                }
+            )
+        return self._session
+    
+    async def get_subscription(self) -> Dict[str, Any]:
+        """Get subscription information."""
+        session = await self._get_session()
+        async with session.get(f"{self.base_url}/user/subscription") as response:
+            response.raise_for_status()
+            return await response.json()
+    
+    async def get_usage_stats(
+        self,
+        start_unix: int,
+        end_unix: int,
+        stat_type: str = "character-stats",
+        **params
+    ) -> Dict[str, Any]:
+        """Get usage statistics."""
+        cache_key = f"{stat_type}_{start_unix}_{end_unix}_{json.dumps(params, sort_keys=True)}"
+        
+        # Check cache
+        if cache_key in self._usage_cache:
+            if datetime.now().timestamp() - self._cache_timestamps[cache_key] < Config.CACHE_TTL:
+                return self._usage_cache[cache_key]
+        
+        session = await self._get_session()
+        url = f"{self.base_url}/usage/{stat_type}"
+        params = {
+            "start_unix": start_unix,
+            "end_unix": end_unix,
+            **params
+        }
+        
+        async with session.get(url, params=params) as response:
+            response.raise_for_status()
+            data = await response.json()
+            
+            # Cache result
+            self._usage_cache[cache_key] = data
+            self._cache_timestamps[cache_key] = datetime.now().timestamp()
+            
+            return data
+    
+    async def get_history(self, **params) -> Dict[str, Any]:
+        """Get generation history."""
+        session = await self._get_session()
+        async with session.get(f"{self.base_url}/history", params=params) as response:
+            response.raise_for_status()
+            return await response.json()
+    
+    async def download_history_audio(self, history_item_id: str) -> bytes:
+        """Download audio for history item."""
+        session = await self._get_session()
+        async with session.get(f"{self.base_url}/history/{history_item_id}/audio") as response:
+            response.raise_for_status()
+            return await response.read()
+    
+    async def get_invoices(self, **params) -> Dict[str, Any]:
+        """Get billing invoices."""
+        session = await self._get_session()
+        async with session.get(f"{self.base_url}/invoices", params=params) as response:
+            response.raise_for_status()
+            return await response.json()
+    
+    async def close(self):
+        """Close the client session."""
+        if self._session:
+            await self._session.close()
+
+# ============================================================
+# Analytics Utilities
+# ============================================================
+
+def calculate_usage_trends(data: List[Dict], window: int = 7) -> Dict[str, Any]:
+    """Calculate usage trends from raw data."""
+    if not data:
+        return {"trend": "insufficient_data"}
+    
+    df = pd.DataFrame(data)
+    df['date'] = pd.to_datetime(df['timestamp'])
+    df = df.set_index('date')
+    
+    # Calculate rolling average
+    rolling_avg = df['usage'].rolling(window=window).mean()
+    
+    # Calculate trend
+    if len(rolling_avg) >= 2:
+        recent = rolling_avg.iloc[-1]
+        previous = rolling_avg.iloc[-window] if len(rolling_avg) > window else rolling_avg.iloc[0]
+        change_pct = ((recent - previous) / previous * 100) if previous > 0 else 0
+        
+        if change_pct > 10:
+            trend = "increasing"
+        elif change_pct < -10:
+            trend = "decreasing"
+        else:
+            trend = "stable"
+    else:
+        trend = "insufficient_data"
+    
+    return {
+        "trend": trend,
+        "change_percentage": change_pct if 'change_pct' in locals() else 0,
+        "current_average": rolling_avg.iloc[-1] if len(rolling_avg) > 0 else 0,
+        "window_days": window
+    }
+
+def predict_usage(
+    historical_data: List[Dict],
+    days_ahead: int = 7
+) -> Dict[str, Any]:
+    """Predict future usage based on historical data."""
+    if len(historical_data) < 14:  # Need at least 2 weeks
+        return {"error": "Insufficient data for prediction"}
+    
+    df = pd.DataFrame(historical_data)
+    df['date'] = pd.to_datetime(df['timestamp'])
+    df = df.set_index('date')
+    
+    # Simple linear regression for prediction
+    from scipy import stats
+    x = range(len(df))
+    y = df['usage'].values
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+    
+    # Predict future values
+    predictions = []
+    for i in range(days_ahead):
+        future_index = len(df) + i
+        predicted_value = slope * future_index + intercept
+        predictions.append({
+            "date": (df.index[-1] + timedelta(days=i+1)).strftime("%Y-%m-%d"),
+            "predicted_usage": max(0, predicted_value)  # Ensure non-negative
+        })
+    
+    return {
+        "predictions": predictions,
+        "confidence": r_value ** 2,  # R-squared
+        "trend_slope": slope
+    }
+
+def aggregate_usage_data(
+    data: Dict[str, List],
+    aggregation: str = "day"
+) -> Dict[str, Any]:
+    """Aggregate usage data by specified interval."""
+    aggregated = {}
+    
+    for key, values in data.items():
+        df = pd.DataFrame(values)
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        
+        # Set aggregation rule
+        if aggregation == "hour":
+            rule = "H"
+        elif aggregation == "day":
+            rule = "D"
+        elif aggregation == "week":
+            rule = "W"
+        elif aggregation == "month":
+            rule = "M"
+        else:
+            rule = "D"
+        
+        # Perform aggregation
+        df = df.set_index('timestamp').resample(rule).sum()
+        aggregated[key] = df.to_dict('records')
+    
+    return aggregated
+
+# ============================================================
+# Export Utilities
+# ============================================================
+
+async def export_to_csv(data: List[Dict], filename: str) -> str:
+    """Export data to CSV file."""
+    output_path = os.path.join(Config.REPORT_OUTPUT_DIR, filename)
+    os.makedirs(Config.REPORT_OUTPUT_DIR, exist_ok=True)
+    
+    df = pd.DataFrame(data)
+    df.to_csv(output_path, index=False)
+    
+    return output_path
+
+async def export_to_json(data: Any, filename: str) -> str:
+    """Export data to JSON file."""
+    output_path = os.path.join(Config.REPORT_OUTPUT_DIR, filename)
+    os.makedirs(Config.REPORT_OUTPUT_DIR, exist_ok=True)
+    
+    with open(output_path, 'w') as f:
+        json.dump(data, f, indent=2, default=str)
+    
+    return output_path
+
+# ============================================================
+# Validation
+# ============================================================
+
+def validate_date_range(start_date: str, end_date: str) -> tuple:
+    """Validate and parse date range."""
+    try:
+        start = datetime.fromisoformat(start_date)
+        end = datetime.fromisoformat(end_date)
+        
+        if start > end:
+            raise ValueError("Start date must be before end date")
+        
+        # Check maximum range (1 year)
+        if (end - start).days > 365:
+            raise ValueError("Date range cannot exceed 365 days")
+        
+        return int(start.timestamp()), int(end.timestamp())
+    except Exception as e:
+        raise ValueError(f"Invalid date format: {e}")
+
+def validate_aggregation(aggregation: str) -> str:
+    """Validate aggregation parameter."""
+    valid = ["minute", "hour", "day", "week", "month"]
+    if aggregation not in valid:
+        raise ValueError(f"Invalid aggregation: {aggregation}. Must be one of {valid}")
+    return aggregation
+
+def validate_breakdown(breakdown: str) -> str:
+    """Validate breakdown parameter."""
+    valid = ["voice", "user", "apikey", "model", "language", "feature"]
+    if breakdown and breakdown not in valid:
+        raise ValueError(f"Invalid breakdown: {breakdown}. Must be one of {valid}")
+    return breakdown
+
+# ============================================================
+# Response Formatting
+# ============================================================
+
+def format_usage_response(data: Dict[str, Any], include_summary: bool = True) -> Dict[str, Any]:
+    """Format usage data response."""
+    response = {
+        "success": True,
+        "data": data,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    if include_summary and "usage" in data:
+        total = sum(sum(values) for values in data["usage"].values())
+        response["summary"] = {
+            "total_usage": total,
+            "period_start": data.get("period_start"),
+            "period_end": data.get("period_end"),
+            "breakdown_type": data.get("metadata", {}).get("breakdown_type")
+        }
+    
+    return response
+
+def format_error(error: Exception) -> Dict[str, Any]:
+    """Format error response."""
+    return {
+        "success": False,
+        "error": str(error),
+        "error_type": type(error).__name__,
+        "timestamp": datetime.now().isoformat()
+    }
+```
+
 ## Dependencies
 - `elevenlabs>=1.0.0`
 - `fastmcp>=0.3.0`
 - `pandas>=2.0.0` (for analytics)
-- `matplotlib>=3.7.0` (for visualizations)
+- `scipy>=1.11.0` (for predictions)
+- `aiohttp>=3.9.0`
