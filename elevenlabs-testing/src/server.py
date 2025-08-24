@@ -26,6 +26,24 @@ from src.utils import (
     setup_logging
 )
 
+# Import all tools
+from tools import (
+    # Test Management
+    list_tests,
+    get_test,
+    create_test,
+    update_test,
+    delete_test,
+    get_test_summaries,
+    # Test Execution
+    run_tests_on_agent,
+    get_test_invocation,
+    resubmit_test,
+    # Simulation
+    simulate_conversation,
+    stream_simulate_conversation
+)
+
 # Setup logging
 logger = setup_logging(__name__)
 
@@ -71,10 +89,12 @@ async def lifespan(app):
 mcp.lifespan = lifespan
 
 
+# ============================================================
 # Test Management Tools
+# ============================================================
 
 @mcp.tool()
-async def list_tests(
+async def list_tests_tool(
     agent_id: Optional[str] = None,
     limit: int = 50
 ) -> Dict[str, Any]:
@@ -95,60 +115,11 @@ async def list_tests(
     
     API Endpoint: GET /convai/tests
     """
-    # Validate agent ID if provided
-    if agent_id:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error(
-                f"Invalid agent ID format: {agent_id}",
-                "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-            )
-    
-    # Validate and coerce limit
-    try:
-        limit = int(limit)
-    except (TypeError, ValueError):
-        return format_error(
-            "Limit must be an integer",
-            "Provide a number between 1 and 100"
-        )
-    
-    if limit < 1:
-        return format_error(
-            f"Limit too low: {limit}",
-            "Minimum is 1 test"
-        )
-    elif limit > 100:
-        return format_error(
-            f"Limit too high: {limit}",
-            "Maximum is 100 tests per request"
-        )
-    
-    try:
-        params = {"limit": limit}
-        if agent_id:
-            params["agent_id"] = agent_id
-        
-        result = await client._request(
-            "GET",
-            "/convai/agent-testing",
-            params=params,
-            use_cache=True
-        )
-        
-        tests = result.get("tests", [])
-        
-        return format_success(
-            f"Found {len(tests)} test scenarios",
-            {"tests": tests, "count": len(tests)}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to list tests: {e}")
-        return format_error(str(e))
+    return await list_tests(client, agent_id, limit)
 
 
 @mcp.tool()
-async def get_test(
+async def get_test_tool(
     test_id: str
 ) -> Dict[str, Any]:
     """
@@ -172,38 +143,11 @@ async def get_test(
         - Success criteria and thresholds
         - Validation rules
     """
-    # Validate test ID
-    if not test_id:
-        return format_error(
-            "Test ID is required",
-            "Provide test_id from list_tests()"
-        )
-    
-    if not validate_elevenlabs_id(test_id, 'test'):
-        return format_error(
-            f"Invalid test ID format: {test_id}",
-            "Use format: test_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        result = await client._request(
-            "GET",
-            f"/convai/agent-testing/{test_id}",
-            use_cache=True
-        )
-        
-        return format_success(
-            "Retrieved test scenario",
-            {"test": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to get test {test_id}: {e}")
-        return format_error(str(e))
+    return await get_test(client, test_id)
 
 
 @mcp.tool()
-async def create_test(
+async def create_test_tool(
     name: str,
     agent_id: str,
     test_type: Literal["conversation", "tool", "integration"] = "conversation",
@@ -238,66 +182,11 @@ async def create_test(
     
     API Endpoint: POST /convai/tests
     """
-    # Validate inputs
-    if not name or not name.strip():
-        return format_error(
-            "Test name cannot be empty",
-            "Provide a descriptive name like 'Customer Support Flow' or 'Order Processing Test'"
-        )
-    
-    if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error(
-            f"Invalid agent ID format: {agent_id}",
-            "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        # Build payload according to ElevenLabs API docs
-        data = {
-            "name": name,
-            "chat_history": scenarios or [
-                {
-                    "role": "user",  
-                    "time_in_call_secs": 1
-                }
-            ],
-            "success_condition": expectations.get("success_condition", "string") if expectations else "string",
-            "success_examples": expectations.get("success_examples", [
-                {
-                    "response": "string",
-                    "type": "string"
-                }
-            ]) if expectations else [{"response": "string", "type": "string"}],
-            "failure_examples": expectations.get("failure_examples", [
-                {
-                    "response": "string", 
-                    "type": "string"
-                }
-            ]) if expectations else [{"response": "string", "type": "string"}]
-        }
-        
-        # Add optional parameters if provided
-        if metadata:
-            data.update(metadata)
-        
-        result = await client._request(
-            "POST",
-            "/convai/agent-testing/create",
-            json_data=data
-        )
-        
-        return format_success(
-            f"Created test scenario '{name}'",
-            {"test": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to create test: {e}")
-        return format_error(str(e))
+    return await create_test(client, name, agent_id, test_type, scenarios, expectations, metadata)
 
 
 @mcp.tool()
-async def update_test(
+async def update_test_tool(
     test_id: str,
     name: Optional[str] = None,
     scenarios: Optional[List[Dict]] = None,
@@ -328,48 +217,11 @@ async def update_test(
     
     Note: Only provided fields are updated. Omitted fields remain unchanged.
     """
-    # Validate test ID
-    if not test_id:
-        return format_error(
-            "Test ID is required",
-            "Provide test_id from list_tests() or get_test()"
-        )
-    
-    if not validate_elevenlabs_id(test_id, 'test'):
-        return format_error(
-            f"Invalid test ID format: {test_id}",
-            "Use format: test_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        data = {}
-        if name:
-            data["name"] = name
-        if scenarios is not None:
-            data["scenarios"] = scenarios
-        if expectations is not None:
-            data["expectations"] = expectations
-        if metadata is not None:
-            data["metadata"] = metadata
-        
-        result = await client._request(
-            "PUT",
-            f"/convai/agent-testing/{test_id}",
-            json_data=data
-        )
-        
-        return format_success(
-            f"Updated test {test_id}",
-            {"test": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to update test {test_id}: {e}")
-        return format_error(str(e))
+    return await update_test(client, test_id, name, scenarios, expectations, metadata)
 
 
 @mcp.tool()
-async def delete_test(
+async def delete_test_tool(
     test_id: str
 ) -> Dict[str, Any]:
     """
@@ -388,37 +240,11 @@ async def delete_test(
     
     Warning: This action is permanent and cannot be undone.
     """
-    # Validate test ID
-    if not test_id:
-        return format_error(
-            "Test ID is required",
-            "Provide test_id from list_tests()"
-        )
-    
-    if not validate_elevenlabs_id(test_id, 'test'):
-        return format_error(
-            f"Invalid test ID format: {test_id}",
-            "Use format: test_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        await client._request(
-            "DELETE",
-            f"/convai/agent-testing/{test_id}"
-        )
-        
-        return format_success(
-            f"Deleted test {test_id}",
-            {"deleted": True}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to delete test {test_id}: {e}")
-        return format_error(str(e))
+    return await delete_test(client, test_id)
 
 
 @mcp.tool()
-async def get_test_summaries(
+async def get_test_summaries_tool(
     test_ids: List[str]
 ) -> Dict[str, Any]:
     """
@@ -430,31 +256,15 @@ async def get_test_summaries(
     Returns:
         Summary statistics for tests
     """
-    try:
-        for test_id in test_ids:
-            if not validate_elevenlabs_id(test_id, 'test'):
-                return format_error(f"Invalid test ID format: {test_id}")
-        
-        result = await client._request(
-            "POST",
-            "/convai/agent-testing/summaries",
-            json_data={"test_ids": test_ids}
-        )
-        
-        return format_success(
-            f"Retrieved summaries for {len(test_ids)} tests",
-            {"summaries": result.get("summaries", [])}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to get test summaries: {e}")
-        return format_error(str(e))
+    return await get_test_summaries(client, test_ids)
 
 
+# ============================================================
 # Test Execution Tools
+# ============================================================
 
 @mcp.tool()
-async def run_tests_on_agent(
+async def run_tests_on_agent_tool(
     agent_id: str,
     test_ids: Optional[List[str]] = None,
     test_type: Optional[str] = None,
@@ -483,53 +293,11 @@ async def run_tests_on_agent(
     
     Note: Use get_test_invocation() with returned invocation_id to check results.
     """
-    # Validate agent ID
-    if not agent_id:
-        return format_error(
-            "Agent ID is required",
-            "Provide agent_id to test"
-        )
-    
-    if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error(
-            f"Invalid agent ID format: {agent_id}",
-            "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        if test_ids:
-            for test_id in test_ids:
-                if not validate_elevenlabs_id(test_id, 'test'):
-                    return format_error(f"Invalid test ID format: {test_id}")
-        
-        data = {
-            "test_ids": test_ids,
-            "test_type": test_type,
-            "parallel": parallel
-        }
-        
-        result = await client._request(
-            "POST",
-            f"/convai/agents/{agent_id}/run-tests",
-            json_data=data
-        )
-        
-        return format_success(
-            f"Executed tests on agent {agent_id}",
-            {
-                "invocation_id": result.get("invocation_id"),
-                "status": result.get("status"),
-                "results": result.get("results", [])
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to run tests on agent {agent_id}: {e}")
-        return format_error(str(e))
+    return await run_tests_on_agent(client, agent_id, test_ids, test_type, parallel)
 
 
 @mcp.tool()
-async def get_test_invocation(
+async def get_test_invocation_tool(
     invocation_id: str
 ) -> Dict[str, Any]:
     """
@@ -554,38 +322,11 @@ async def get_test_invocation(
         - Execution duration
         - Detailed logs per test
     """
-    # Validate invocation ID
-    if not invocation_id:
-        return format_error(
-            "Invocation ID is required",
-            "Provide invocation_id from run_tests_on_agent()"
-        )
-    
-    if not validate_elevenlabs_id(invocation_id, 'invocation'):
-        return format_error(
-            f"Invalid invocation ID format: {invocation_id}",
-            "Use format: inv_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        result = await client._request(
-            "GET",
-            f"/convai/test-invocations/{invocation_id}",
-            use_cache=True
-        )
-        
-        return format_success(
-            "Retrieved test invocation results",
-            {"invocation": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to get test invocation {invocation_id}: {e}")
-        return format_error(str(e))
+    return await get_test_invocation(client, invocation_id)
 
 
 @mcp.tool()
-async def resubmit_test(
+async def resubmit_test_tool(
     invocation_id: str,
     retry_failed_only: bool = True
 ) -> Dict[str, Any]:
@@ -599,33 +340,15 @@ async def resubmit_test(
     Returns:
         New invocation results
     """
-    try:
-        if not validate_elevenlabs_id(invocation_id, 'invocation'):
-            return format_error("Invalid invocation ID format", "Use format: inv_XXXX")
-        
-        result = await client._request(
-            "POST",
-            f"/convai/test-invocations/{invocation_id}/resubmit",
-            json_data={"retry_failed_only": retry_failed_only}
-        )
-        
-        return format_success(
-            "Resubmitted test invocation",
-            {
-                "new_invocation_id": result.get("invocation_id"),
-                "status": result.get("status")
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to resubmit test {invocation_id}: {e}")
-        return format_error(str(e))
+    return await resubmit_test(client, invocation_id, retry_failed_only)
 
 
+# ============================================================
 # Simulation Tools
+# ============================================================
 
 @mcp.tool()
-async def simulate_conversation(
+async def simulate_conversation_tool(
     agent_id: str,
     user_message: str,
     context: Optional[Dict] = None,
@@ -661,86 +384,11 @@ async def simulate_conversation(
         - Debug agent behavior
         - Generate sample interactions
     """
-    # Validate agent ID
-    if not agent_id:
-        return format_error(
-            "Agent ID is required",
-            "Provide agent_id to simulate conversation with"
-        )
-    
-    if not validate_elevenlabs_id(agent_id, 'agent'):
-        return format_error(
-            f"Invalid agent ID format: {agent_id}",
-            "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    # Validate user message
-    if not user_message or not user_message.strip():
-        return format_error(
-            "User message cannot be empty",
-            "Provide an initial message to start the conversation"
-        )
-    
-    # Validate and coerce max_turns
-    try:
-        max_turns = int(max_turns)
-    except (TypeError, ValueError):
-        return format_error(
-            "Max turns must be an integer",
-            "Provide a number between 1 and 50"
-        )
-    
-    if max_turns < 1:
-        return format_error(
-            f"Max turns too low: {max_turns}",
-            "Minimum is 1 turn"
-        )
-    elif max_turns > 50:
-        return format_error(
-            f"Max turns too high: {max_turns}",
-            "Maximum is 50 turns to prevent excessive simulation"
-        )
-    
-    try:
-        data = {
-            "simulation_specification": {
-                "simulated_user_config": {
-                    "first_message": user_message,
-                    "language": "en"
-                }
-            }
-        }
-        
-        # Add context if provided
-        if context:
-            data["simulation_specification"]["context"] = context
-            
-        # Add max_turns if specified
-        if max_turns != 10:  # Only include if different from default
-            data["simulation_specification"]["max_turns"] = max_turns
-        
-        result = await client._request(
-            "POST",
-            f"/convai/agents/{agent_id}/simulate-conversation",
-            json_data=data
-        )
-        
-        return format_success(
-            "Simulated conversation completed",
-            {
-                "conversation": result.get("conversation"),
-                "turns": result.get("turns"),
-                "duration": result.get("duration")
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to simulate conversation for {agent_id}: {e}")
-        return format_error(str(e))
+    return await simulate_conversation(client, agent_id, user_message, context, max_turns)
 
 
 @mcp.tool()
-async def stream_simulate_conversation(
+async def stream_simulate_conversation_tool(
     agent_id: str,
     user_message: str,
     stream_callback: Optional[str] = None
@@ -756,33 +404,7 @@ async def stream_simulate_conversation(
     Returns:
         Stream session details
     """
-    try:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error("Invalid agent ID format", "Use format: agent_XXXX")
-        
-        data = {
-            "message": user_message,
-            "stream_callback": stream_callback
-        }
-        
-        result = await client._request(
-            "POST",
-            f"/convai/agents/{agent_id}/stream-simulate-conversation",
-            json_data=data
-        )
-        
-        return format_success(
-            "Started streaming simulation",
-            {
-                "session_id": result.get("session_id"),
-                "stream_url": result.get("stream_url"),
-                "status": "streaming"
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to stream simulation for {agent_id}: {e}")
-        return format_error(str(e))
+    return await stream_simulate_conversation(client, agent_id, user_message, stream_callback)
 
 
 # Resources

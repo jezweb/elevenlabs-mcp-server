@@ -28,6 +28,30 @@ from src.utils import (
     setup_logging
 )
 
+# Import all tools
+from tools import (
+    # Tool Management
+    list_tools,
+    get_tool,
+    create_tool,
+    update_tool,
+    delete_tool,
+    get_tool_dependent_agents,
+    # MCP Server Management
+    create_mcp_server,
+    get_mcp_server,
+    list_mcp_server_tools,
+    # Approval Management
+    update_approval_policy,
+    create_tool_approval,
+    delete_tool_approval,
+    # Secrets Management
+    get_secrets,
+    create_secret,
+    update_secret,
+    delete_secret
+)
+
 # Setup logging
 logger = setup_logging(__name__)
 
@@ -73,10 +97,12 @@ async def lifespan(app):
 mcp.lifespan = lifespan
 
 
+# ============================================================
 # Tool Management
+# ============================================================
 
 @mcp.tool()
-async def list_tools(
+async def list_tools_tool(
     agent_id: Optional[str] = None,
     tool_type: Optional[str] = None,
     limit: int = 50
@@ -99,62 +125,11 @@ async def list_tools(
     
     API Endpoint: GET /convai/tools
     """
-    # Validate agent ID if provided
-    if agent_id:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error(
-                f"Invalid agent ID format: {agent_id}",
-                "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-            )
-    
-    # Validate limit
-    try:
-        limit = int(limit)
-    except (TypeError, ValueError):
-        return format_error(
-            "Limit must be an integer",
-            "Provide a number between 1 and 100"
-        )
-    
-    if limit < 1:
-        return format_error(
-            f"Limit too low: {limit}",
-            "Minimum is 1 tool"
-        )
-    elif limit > 100:
-        return format_error(
-            f"Limit too high: {limit}",
-            "Maximum is 100 tools per request"
-        )
-    
-    try:
-        params = {"limit": limit}
-        if agent_id:
-            params["agent_id"] = agent_id
-        if tool_type:
-            params["type"] = tool_type
-        
-        result = await client._request(
-            "GET",
-            "/convai/tools",
-            params=params,
-            use_cache=True
-        )
-        
-        tools = result.get("tools", [])
-        
-        return format_success(
-            f"Found {len(tools)} tools",
-            {"tools": tools, "count": len(tools)}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to list tools: {e}")
-        return format_error(str(e))
+    return await list_tools(client, agent_id, tool_type, limit)
 
 
 @mcp.tool()
-async def get_tool(
+async def get_tool_tool(
     tool_id: str
 ) -> Dict[str, Any]:
     """
@@ -178,38 +153,11 @@ async def get_tool(
         - Rate limits and quotas
         - Usage statistics
     """
-    # Validate tool ID
-    if not tool_id:
-        return format_error(
-            "Tool ID is required",
-            "Provide tool_id from list_tools()"
-        )
-    
-    if not validate_elevenlabs_id(tool_id, 'tool'):
-        return format_error(
-            f"Invalid tool ID format: {tool_id}",
-            "Use format: tool_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )
-    
-    try:
-        result = await client._request(
-            "GET",
-            f"/convai/tools/{tool_id}",
-            use_cache=True
-        )
-        
-        return format_success(
-            "Retrieved tool details",
-            {"tool": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to get tool {tool_id}: {e}")
-        return format_error(str(e))
+    return await get_tool(client, tool_id)
 
 
 @mcp.tool()
-async def create_tool(
+async def create_tool_tool(
     name: str,
     description: str,
     tool_type: str,
@@ -246,58 +194,11 @@ async def create_tool(
     
     API Endpoint: POST /convai/tools
     """
-    # Validate inputs
-    if not name or not name.strip():
-        return format_error(
-            "Tool name cannot be empty",
-            "Provide a descriptive name like 'Weather API' or 'Database Query'"
-        )
-    
-    if not description or not description.strip():
-        return format_error(
-            "Tool description cannot be empty",
-            "Describe what the tool does"
-        )
-    
-    if tool_type not in ["api", "webhook", "database", "custom"]:
-        return format_error(
-            f"Invalid tool type: {tool_type}",
-            "Use 'api', 'webhook', 'database', or 'custom'"
-        )
-    
-    if not configuration:
-        return format_error(
-            "Configuration is required",
-            "Provide tool-specific configuration parameters"
-        )
-    
-    try:
-        data = {
-            "name": name,
-            "description": description,
-            "type": tool_type,
-            "configuration": configuration,
-            "metadata": metadata or {}
-        }
-        
-        result = await client._request(
-            "POST",
-            "/convai/tools",
-            json_data=data
-        )
-        
-        return format_success(
-            f"Created tool '{name}'",
-            {"tool": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to create tool: {e}")
-        return format_error(str(e))
+    return await create_tool(client, name, description, tool_type, configuration, metadata)
 
 
 @mcp.tool()
-async def update_tool(
+async def update_tool_tool(
     tool_id: str,
     name: Optional[str] = None,
     description: Optional[str] = None,
@@ -317,38 +218,11 @@ async def update_tool(
     Returns:
         Updated tool details
     """
-    try:
-        if not validate_elevenlabs_id(tool_id, 'tool'):
-            return format_error("Invalid tool ID format", "Use format: tool_XXXX")
-        
-        data = {}
-        if name:
-            data["name"] = name
-        if description:
-            data["description"] = description
-        if configuration is not None:
-            data["configuration"] = configuration
-        if metadata is not None:
-            data["metadata"] = metadata
-        
-        result = await client._request(
-            "PATCH",
-            f"/convai/tools/{tool_id}",
-            json_data=data
-        )
-        
-        return format_success(
-            f"Updated tool {tool_id}",
-            {"tool": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to update tool {tool_id}: {e}")
-        return format_error(str(e))
+    return await update_tool(client, tool_id, name, description, configuration, metadata)
 
 
 @mcp.tool()
-async def delete_tool(
+async def delete_tool_tool(
     tool_id: str
 ) -> Dict[str, Any]:
     """
@@ -360,27 +234,11 @@ async def delete_tool(
     Returns:
         Deletion confirmation
     """
-    try:
-        if not validate_elevenlabs_id(tool_id, 'tool'):
-            return format_error("Invalid tool ID format", "Use format: tool_XXXX")
-        
-        await client._request(
-            "DELETE",
-            f"/convai/tools/{tool_id}"
-        )
-        
-        return format_success(
-            f"Deleted tool {tool_id}",
-            {"deleted": True}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to delete tool {tool_id}: {e}")
-        return format_error(str(e))
+    return await delete_tool(client, tool_id)
 
 
 @mcp.tool()
-async def get_tool_dependent_agents(
+async def get_tool_dependent_agents_tool(
     tool_id: str
 ) -> Dict[str, Any]:
     """
@@ -392,32 +250,15 @@ async def get_tool_dependent_agents(
     Returns:
         List of dependent agents
     """
-    try:
-        if not validate_elevenlabs_id(tool_id, 'tool'):
-            return format_error("Invalid tool ID format", "Use format: tool_XXXX")
-        
-        result = await client._request(
-            "GET",
-            f"/convai/tools/{tool_id}/dependent-agents",
-            use_cache=True
-        )
-        
-        agents = result.get("agents", [])
-        
-        return format_success(
-            f"Found {len(agents)} agents using this tool",
-            {"agents": agents, "count": len(agents)}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to get dependent agents for {tool_id}: {e}")
-        return format_error(str(e))
+    return await get_tool_dependent_agents(client, tool_id)
 
 
+# ============================================================
 # MCP Server Management
+# ============================================================
 
 @mcp.tool()
-async def create_mcp_server(
+async def create_mcp_server_tool(
     agent_id: str,
     server_url: str,
     server_type: Literal["SSE", "HTTP"] = "SSE",
@@ -437,40 +278,12 @@ async def create_mcp_server(
     Returns:
         Integration configuration
     """
-    try:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error("Invalid agent ID format", "Use format: agent_XXXX")
-        
-        if not validate_url(server_url):
-            return format_error("Invalid server URL")
-        
-        data = {
-            "agent_id": agent_id,
-            "url": server_url,
-            "type": server_type,
-            "name": name,
-            "description": description
-        }
-        
-        result = await client._request(
-            "POST",
-            "/convai/mcp/servers",
-            json_data=data
-        )
-        
-        return format_success(
-            f"Added MCP server to agent {agent_id}",
-            {"server": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to create MCP server: {e}")
-        return format_error(str(e))
+    return await create_mcp_server(client, agent_id, server_url, server_type, name, description)
 
 
 
 @mcp.tool()
-async def get_mcp_server(
+async def get_mcp_server_tool(
     server_id: str
 ) -> Dict[str, Any]:
     """
@@ -482,28 +295,11 @@ async def get_mcp_server(
     Returns:
         Server configuration
     """
-    try:
-        if not validate_elevenlabs_id(server_id, 'server'):
-            return format_error("Invalid server ID format", "Use format: server_XXXX")
-        
-        result = await client._request(
-            "GET",
-            f"/convai/mcp/servers/{server_id}",
-            use_cache=True
-        )
-        
-        return format_success(
-            "Retrieved MCP server details",
-            {"server": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to get MCP server {server_id}: {e}")
-        return format_error(str(e))
+    return await get_mcp_server(client, server_id)
 
 
 @mcp.tool()
-async def list_mcp_server_tools(
+async def list_mcp_server_tools_tool(
     server_id: str
 ) -> Dict[str, Any]:
     """
@@ -515,32 +311,15 @@ async def list_mcp_server_tools(
     Returns:
         Available tools from server
     """
-    try:
-        if not validate_elevenlabs_id(server_id, 'server'):
-            return format_error("Invalid server ID format", "Use format: server_XXXX")
-        
-        result = await client._request(
-            "GET",
-            f"/convai/mcp/servers/{server_id}/tools",
-            use_cache=True
-        )
-        
-        tools = result.get("tools", [])
-        
-        return format_success(
-            f"Found {len(tools)} tools from MCP server",
-            {"tools": tools, "count": len(tools)}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to list tools for {server_id}: {e}")
-        return format_error(str(e))
+    return await list_mcp_server_tools(client, server_id)
 
 
+# ============================================================
 # Approval Management
+# ============================================================
 
 @mcp.tool()
-async def update_approval_policy(
+async def update_approval_policy_tool(
     server_id: str,
     policy: Literal["always_ask", "fine_grained", "no_approval"]
 ) -> Dict[str, Any]:
@@ -554,28 +333,11 @@ async def update_approval_policy(
     Returns:
         Updated policy configuration
     """
-    try:
-        if not validate_elevenlabs_id(server_id, 'server'):
-            return format_error("Invalid server ID format", "Use format: server_XXXX")
-        
-        result = await client._request(
-            "PATCH",
-            f"/convai/mcp/servers/{server_id}/approval-policy",
-            json_data={"policy": policy}
-        )
-        
-        return format_success(
-            f"Updated approval policy to '{policy}'",
-            {"policy": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to update approval policy for {server_id}: {e}")
-        return format_error(str(e))
+    return await update_approval_policy(client, server_id, policy)
 
 
 @mcp.tool()
-async def create_tool_approval(
+async def create_tool_approval_tool(
     server_id: str,
     tool_name: str,
     approval_mode: Literal["always", "never", "conditional"],
@@ -593,34 +355,11 @@ async def create_tool_approval(
     Returns:
         Approval configuration
     """
-    try:
-        if not validate_elevenlabs_id(server_id, 'server'):
-            return format_error("Invalid server ID format", "Use format: server_XXXX")
-        
-        data = {
-            "tool_name": tool_name,
-            "approval_mode": approval_mode,
-            "conditions": conditions or {}
-        }
-        
-        result = await client._request(
-            "POST",
-            f"/convai/mcp/servers/{server_id}/tool-approvals",
-            json_data=data
-        )
-        
-        return format_success(
-            f"Created approval rule for '{tool_name}'",
-            {"approval": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to create tool approval: {e}")
-        return format_error(str(e))
+    return await create_tool_approval(client, server_id, tool_name, approval_mode, conditions)
 
 
 @mcp.tool()
-async def delete_tool_approval(
+async def delete_tool_approval_tool(
     server_id: str,
     approval_id: str
 ) -> Dict[str, Any]:
@@ -634,29 +373,15 @@ async def delete_tool_approval(
     Returns:
         Deletion confirmation
     """
-    try:
-        if not validate_elevenlabs_id(server_id, 'server'):
-            return format_error("Invalid server ID format", "Use format: server_XXXX")
-        
-        await client._request(
-            "DELETE",
-            f"/convai/mcp/servers/{server_id}/tool-approvals/{approval_id}"
-        )
-        
-        return format_success(
-            f"Deleted approval rule {approval_id}",
-            {"deleted": True}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to delete tool approval: {e}")
-        return format_error(str(e))
+    return await delete_tool_approval(client, server_id, approval_id)
 
 
+# ============================================================
 # Secrets Management
+# ============================================================
 
 @mcp.tool()
-async def get_secrets(
+async def get_secrets_tool(
     agent_id: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -668,35 +393,11 @@ async def get_secrets(
     Returns:
         List of secret configurations (values hidden)
     """
-    try:
-        if agent_id and not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error("Invalid agent ID format", "Use format: agent_XXXX")
-        
-        params = {}
-        if agent_id:
-            params["agent_id"] = agent_id
-        
-        result = await client._request(
-            "GET",
-            "/convai/secrets",
-            params=params,
-            use_cache=True
-        )
-        
-        secrets = result.get("secrets", [])
-        
-        return format_success(
-            f"Found {len(secrets)} secrets",
-            {"secrets": secrets, "count": len(secrets)}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to list secrets: {e}")
-        return format_error(str(e))
+    return await get_secrets(client, agent_id)
 
 
 @mcp.tool()
-async def create_secret(
+async def create_secret_tool(
     name: str,
     value: str,
     agent_id: str,
@@ -714,39 +415,11 @@ async def create_secret(
     Returns:
         Secret configuration (value hidden)
     """
-    try:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error("Invalid agent ID format", "Use format: agent_XXXX")
-        
-        data = {
-            "name": name,
-            "value": value,
-            "agent_id": agent_id,
-            "description": description
-        }
-        
-        result = await client._request(
-            "POST",
-            "/convai/secrets",
-            json_data=data
-        )
-        
-        # Remove value from response for security
-        if "value" in result:
-            result["value"] = "***"
-        
-        return format_success(
-            f"Created secret '{name}'",
-            {"secret": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to create secret: {e}")
-        return format_error(str(e))
+    return await create_secret(client, name, value, agent_id, description)
 
 
 @mcp.tool()
-async def update_secret(
+async def update_secret_tool(
     secret_id: str,
     value: Optional[str] = None,
     description: Optional[str] = None
@@ -762,38 +435,11 @@ async def update_secret(
     Returns:
         Updated configuration (value hidden)
     """
-    try:
-        if not validate_elevenlabs_id(secret_id, 'secret'):
-            return format_error("Invalid secret ID format", "Use format: secret_XXXX")
-        
-        data = {}
-        if value:
-            data["value"] = value
-        if description:
-            data["description"] = description
-        
-        result = await client._request(
-            "PATCH",
-            f"/convai/secrets/{secret_id}",
-            json_data=data
-        )
-        
-        # Remove value from response for security
-        if "value" in result:
-            result["value"] = "***"
-        
-        return format_success(
-            f"Updated secret {secret_id}",
-            {"secret": result}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to update secret {secret_id}: {e}")
-        return format_error(str(e))
+    return await update_secret(client, secret_id, value, description)
 
 
 @mcp.tool()
-async def delete_secret(
+async def delete_secret_tool(
     secret_id: str
 ) -> Dict[str, Any]:
     """
@@ -805,23 +451,7 @@ async def delete_secret(
     Returns:
         Deletion confirmation
     """
-    try:
-        if not validate_elevenlabs_id(secret_id, 'secret'):
-            return format_error("Invalid secret ID format", "Use format: secret_XXXX")
-        
-        await client._request(
-            "DELETE",
-            f"/convai/secrets/{secret_id}"
-        )
-        
-        return format_success(
-            f"Deleted secret {secret_id}",
-            {"deleted": True}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to delete secret {secret_id}: {e}")
-        return format_error(str(e))
+    return await delete_secret(client, secret_id)
 
 
 # Resources

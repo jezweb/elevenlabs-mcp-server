@@ -91,10 +91,10 @@ server-name/
 
 ## Progress Tracking
 - [x] elevenlabs-agents refactored (1,425 → 358 lines)
-- [ ] elevenlabs-conversations refactored
-- [ ] elevenlabs-knowledge refactored
-- [ ] elevenlabs-testing refactored
-- [ ] elevenlabs-tools refactored
+- [x] elevenlabs-conversations refactored (1,084 → 488 lines)
+- [x] elevenlabs-knowledge refactored (839 → 486 lines)
+- [x] elevenlabs-testing refactored (897 → 518 lines)
+- [x] elevenlabs-tools refactored (945 → ~450 lines)
 - [ ] All servers tested
 - [ ] Documentation updated
 - [ ] Changes committed
@@ -115,6 +115,50 @@ server-name/
   - __init__.py: 89 lines (exports)
 - **Total tools**: 30 tools properly organized
 - **Test status**: ✅ Imports working, server starts
+
+### elevenlabs-conversations ✅
+- **Before**: 1,084 lines in single server.py
+- **After**: 488 lines in server.py + 4 tool files
+- **Structure**:
+  - server.py: 488 lines (registration & lifecycle)
+  - conversations.py: 4 tools
+  - feedback.py: 2 tools
+  - playback.py: 3 tools
+  - analytics.py: 3 tools
+- **Total tools**: 12 tools properly organized
+
+### elevenlabs-knowledge ✅
+- **Before**: 839 lines in single server.py
+- **After**: 486 lines in server.py + 3 tool files
+- **Structure**:
+  - server.py: 486 lines (registration & lifecycle)
+  - documents.py: 9 tools (add URL/text, list, delete, get, update, file, content, chunk)
+  - rag.py: 6 tools (configure, rebuild, compute, get, overview, delete)
+  - analytics.py: 2 tools (dependent agents, knowledge base size)
+- **Total tools**: 17 tools properly organized
+
+### elevenlabs-testing ✅
+- **Before**: 897 lines in single server.py
+- **After**: 518 lines in server.py + 3 tool files
+- **Structure**:
+  - server.py: 518 lines (registration & lifecycle)
+  - tests.py: 6 tools (list, get, create, update, delete, summaries)
+  - execution.py: 3 tools (run, get invocation, resubmit)
+  - simulation.py: 2 tools (simulate, stream simulate)
+- **Total tools**: 11 tools properly organized
+- **Test status**: ✅ Structure complete
+
+### elevenlabs-tools ✅
+- **Before**: 945 lines in single server.py
+- **After**: 574 lines in server.py + 4 tool files
+- **Structure**:
+  - server.py: 574 lines (registration & lifecycle)
+  - tools.py: 6 tools (list, get, create, update, delete, dependent agents)
+  - servers.py: 3 tools (create MCP server, get server, list server tools)
+  - approvals.py: 3 tools (update policy, create approval, delete approval)
+  - secrets.py: 4 tools (get, create, update, delete)
+- **Total tools**: 16 tools properly organized
+- **Test status**: ✅ Structure complete
 
 ## Notes
 - Start with elevenlabs-agents as template
