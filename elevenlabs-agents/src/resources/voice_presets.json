@@ -1,0 +1,102 @@
+{
+  "professional": {
+    "voice_id": "cgSgspJ2msm6clMCkdW9",
+    "stability": 0.8,
+    "similarity_boost": 0.9,
+    "speed": 1.0,
+    "style": 0.0,
+    "description": "Clear, confident, and professional tone. Perfect for business communications, technical support, and formal interactions.",
+    "use_cases": ["customer_support", "technical_support", "receptionist", "product_information"],
+    "personality": "authoritative, trustworthy, clear"
+  },
+  "friendly": {
+    "voice_id": "21m00Tcm4TlvDq8ikWAM",
+    "stability": 0.5,
+    "similarity_boost": 0.7,
+    "speed": 1.05,
+    "style": 0.2,
+    "description": "Warm, approachable, and conversational. Great for customer service and casual interactions.",
+    "use_cases": ["appointment_booking", "survey_collector", "order_status"],
+    "personality": "warm, empathetic, approachable"
+  },
+  "energetic": {
+    "voice_id": "yoZ06aMxZJJ28mfd3POQ",
+    "stability": 0.3,
+    "similarity_boost": 0.5,
+    "speed": 1.1,
+    "style": 0.4,
+    "description": "Dynamic, enthusiastic, and engaging. Ideal for sales, marketing, and motivational contexts.",
+    "use_cases": ["sales_qualification", "lead_capture", "product_demos"],
+    "personality": "enthusiastic, motivating, dynamic"
+  },
+  "calm": {
+    "voice_id": "EXAVITQu4vr4xnSDxMaL",
+    "stability": 0.9,
+    "similarity_boost": 0.95,
+    "speed": 0.95,
+    "style": 0.0,
+    "description": "Soothing, patient, and reassuring. Excellent for healthcare, wellness, and sensitive topics.",
+    "use_cases": ["healthcare", "counseling", "meditation", "support"],
+    "personality": "patient, soothing, reassuring"
+  },
+  "youthful": {
+    "voice_id": "jsCqWAovK2LkecY7zXl4",
+    "stability": 0.4,
+    "similarity_boost": 0.6,
+    "speed": 1.08,
+    "style": 0.3,
+    "description": "Fresh, modern, and relatable. Connects well with younger audiences and trendy brands.",
+    "use_cases": ["social_media", "gaming", "entertainment", "youth_services"],
+    "personality": "modern, relatable, trendy"
+  },
+  "authoritative": {
+    "voice_id": "flq6f7yk4E4fJM5XTYuZ",
+    "stability": 0.85,
+    "similarity_boost": 0.92,
+    "speed": 0.98,
+    "style": 0.1,
+    "description": "Commanding, knowledgeable, and decisive. Perfect for expert advice and leadership roles.",
+    "use_cases": ["legal", "financial", "executive", "expert_consultation"],
+    "personality": "commanding, expert, decisive"
+  },
+  "neutral": {
+    "voice_id": "MF3mGyEYCl7XYWbV9V6O",
+    "stability": 0.7,
+    "similarity_boost": 0.8,
+    "speed": 1.0,
+    "style": 0.0,
+    "description": "Balanced, versatile, and adaptable. Works well for general purposes and diverse audiences.",
+    "use_cases": ["FAQ", "information", "general_inquiry", "multi_purpose"],
+    "personality": "balanced, clear, adaptable"
+  },
+  "expressive": {
+    "voice_id": "TxGEqnHWrfWFTfGW9XjX",
+    "stability": 0.2,
+    "similarity_boost": 0.4,
+    "speed": 1.05,
+    "style": 0.6,
+    "description": "Highly emotional and varied. Great for storytelling, entertainment, and engaging narratives.",
+    "use_cases": ["storytelling", "entertainment", "children", "creative"],
+    "personality": "animated, emotional, engaging"
+  },
+  "efficient": {
+    "voice_id": "VR6AewLTigWG4xSOukaG",
+    "stability": 0.75,
+    "similarity_boost": 0.85,
+    "speed": 1.15,
+    "style": 0.0,
+    "description": "Quick, concise, and to-the-point. Ideal for busy professionals and time-sensitive interactions.",
+    "use_cases": ["quick_service", "notifications", "alerts", "brief_updates"],
+    "personality": "concise, quick, efficient"
+  },
+  "empathetic": {
+    "voice_id": "pNInz6obpgDQGcFmaJgB",
+    "stability": 0.6,
+    "similarity_boost": 0.75,
+    "speed": 0.97,
+    "style": 0.25,
+    "description": "Understanding, compassionate, and supportive. Best for sensitive situations and emotional support.",
+    "use_cases": ["crisis_support", "counseling", "complaints", "sensitive_topics"],
+    "personality": "understanding, compassionate, supportive"
+  }
+}

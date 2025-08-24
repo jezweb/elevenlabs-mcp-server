@@ -6,7 +6,9 @@ Manages conversational AI agents, configuration, and multi-agent orchestration.
 """
 
 import sys
+import json
 import logging
+from pathlib import Path
 from typing import Dict, Any, Optional, List, Union
 from contextlib import asynccontextmanager
 
@@ -56,6 +58,23 @@ mcp = FastMCP(
     instructions="Manage ElevenLabs conversational AI agents",
     lifespan=lifespan
 )
+
+# ============================================================
+# Resource Loading Helpers
+# ============================================================
+
+def load_resource(filename: str) -> Dict[str, Any]:
+    """Load a JSON resource file."""
+    resource_path = Path(__file__).parent / "resources" / filename
+    if resource_path.exists():
+        with open(resource_path, 'r') as f:
+            return json.load(f)
+    return {}
+
+# Load templates at module level for efficiency
+PROMPT_TEMPLATES = load_resource("prompt_templates.json")
+VOICE_PRESETS = load_resource("voice_presets.json")
+AGENT_TEMPLATES = load_resource("agent_templates.json")
 
 # ============================================================
 # Agent Management Tools
@@ -898,6 +917,490 @@ async def add_shared_voice(
 
 
 # ============================================================
+# Template and Helper Tools
+# ============================================================
+
+@mcp.tool()
+async def simulate_conversation(
+    agent_id: str,
+    user_message: str
+) -> Dict[str, Any]:
+    """
+    Simulate a conversation with an agent for testing.
+    
+    Args:
+        agent_id: Agent to test
+        user_message: Test message to send
+    
+    Returns:
+        Simulated agent response
+    
+    Examples:
+        simulate_conversation("agent_abc123", "Hello, I need help")
+        simulate_conversation("agent_xyz789", "What are your business hours?")
+    
+    Note: This creates a test conversation to validate agent behavior.
+    
+    API Endpoint: POST /convai/convai/simulations
+    """
+    if not validate_elevenlabs_id(agent_id, 'agent'):
+        return format_error("Invalid agent ID format")
+    
+    if not user_message or len(user_message.strip()) < 2:
+        return format_error("Message too short", "Provide a meaningful test message")
+    
+    try:
+        result = await client._request(
+            "POST",
+            "/convai/convai/simulations",
+            json_data={
+                "agent_id": agent_id,
+                "simulation_specification": {
+                    "num_conversations": 1,
+                    "conversation_specification": {
+                        "customer": {
+                            "prompt": {
+                                "prompt": f"You are a user testing the agent. Send this message: {user_message}"
+                            }
+                        },
+                        "max_messages": 2
+                    }
+                }
+            }
+        )
+        
+        return format_success(
+            "Simulation created",
+            {"simulation": result, "test_message": user_message}
+        )
+    except Exception as e:
+        logger.error(f"Failed to simulate conversation: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def list_voices() -> Dict[str, Any]:
+    """
+    List available voices with descriptions and characteristics.
+    
+    Returns:
+        List of voices with details and suggested use cases
+    
+    Note: Returns both preset voices and any custom voices in your workspace.
+    """
+    try:
+        # Get voices from API
+        api_voices = await client._request("GET", "/voices", use_cache=True)
+        voices_list = api_voices.get("voices", [])
+        
+        # Enhance with preset information
+        enhanced_voices = []
+        for voice in voices_list:
+            voice_id = voice.get("voice_id")
+            
+            # Check if we have preset info
+            preset_match = None
+            for preset_name, preset_data in VOICE_PRESETS.items():
+                if preset_data.get("voice_id") == voice_id:
+                    preset_match = preset_name
+                    voice["preset_name"] = preset_name
+                    voice["preset_description"] = preset_data.get("description")
+                    voice["use_cases"] = preset_data.get("use_cases")
+                    voice["personality"] = preset_data.get("personality")
+                    break
+            
+            enhanced_voices.append(voice)
+        
+        return format_success(
+            f"Found {len(enhanced_voices)} voices",
+            {
+                "count": len(enhanced_voices),
+                "voices": enhanced_voices,
+                "presets_available": list(VOICE_PRESETS.keys())
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to list voices: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def get_prompt_template(template_name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get a prompt template for common use cases.
+    
+    Args:
+        template_name: Template to retrieve (e.g., "customer_support", "appointment_booking")
+                      Leave empty to list all available templates
+    
+    Returns:
+        Template details or list of available templates
+    
+    Available Templates:
+        - customer_support: Professional support agent
+        - appointment_booking: Scheduling assistant
+        - sales_qualification: Lead qualifier using BANT
+        - technical_support: IT troubleshooting
+        - survey_collector: Feedback gathering
+        - product_information: Product Q&A
+        - receptionist: Call routing
+        - order_status: Order tracking
+        - faq_assistant: FAQ responses
+        - lead_capture: Website visitor conversion
+    """
+    if not PROMPT_TEMPLATES:
+        return format_error("No templates available", "Template file may be missing")
+    
+    if template_name:
+        template = PROMPT_TEMPLATES.get(template_name)
+        if not template:
+            return format_error(
+                f"Template '{template_name}' not found",
+                f"Available: {', '.join(PROMPT_TEMPLATES.keys())}"
+            )
+        return format_success(
+            f"Retrieved template: {template_name}",
+            {"template": template}
+        )
+    
+    # Return all templates
+    return format_success(
+        f"Available prompt templates: {len(PROMPT_TEMPLATES)}",
+        {
+            "templates": list(PROMPT_TEMPLATES.keys()),
+            "details": PROMPT_TEMPLATES
+        }
+    )
+
+
+@mcp.tool()
+async def get_voice_preset(preset_name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get voice configuration presets for different personalities.
+    
+    Args:
+        preset_name: Preset to retrieve (e.g., "professional", "friendly", "energetic")
+                    Leave empty to list all presets
+    
+    Returns:
+        Voice preset configuration or list of available presets
+    
+    Available Presets:
+        - professional: Clear, confident business tone
+        - friendly: Warm, approachable manner
+        - energetic: Dynamic, enthusiastic delivery
+        - calm: Soothing, patient voice
+        - youthful: Modern, relatable tone
+        - authoritative: Commanding, expert presence
+        - neutral: Balanced, versatile
+        - expressive: Emotional, varied delivery
+        - efficient: Quick, concise communication
+        - empathetic: Understanding, supportive
+    """
+    if not VOICE_PRESETS:
+        return format_error("No presets available", "Preset file may be missing")
+    
+    if preset_name:
+        preset = VOICE_PRESETS.get(preset_name)
+        if not preset:
+            return format_error(
+                f"Preset '{preset_name}' not found",
+                f"Available: {', '.join(VOICE_PRESETS.keys())}"
+            )
+        return format_success(
+            f"Retrieved voice preset: {preset_name}",
+            {"preset": preset}
+        )
+    
+    # Return all presets
+    return format_success(
+        f"Available voice presets: {len(VOICE_PRESETS)}",
+        {
+            "presets": list(VOICE_PRESETS.keys()),
+            "details": VOICE_PRESETS
+        }
+    )
+
+
+@mcp.tool()
+async def create_agent_from_template(
+    template_name: str,
+    custom_name: Optional[str] = None,
+    modifications: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """
+    Create an agent from a pre-configured template.
+    
+    Args:
+        template_name: Template to use (e.g., "customer_support_pro", "appointment_scheduler")
+        custom_name: Override the default agent name
+        modifications: Optional modifications to template settings
+    
+    Returns:
+        Created agent details
+    
+    Available Templates:
+        - customer_support_pro: Full support agent with escalation
+        - appointment_scheduler: Smart booking assistant
+        - sales_qualifier: B2B lead qualification (BANT)
+        - tech_support_tier1: L1 technical support
+        - virtual_receptionist: Call routing assistant
+        - survey_bot: Feedback collector
+        - lead_capture_web: Website visitor converter
+        - order_tracker: E-commerce order status
+        - hr_screening: Initial candidate screening
+        - product_advisor: Product recommendations
+    
+    Examples:
+        create_agent_from_template("customer_support_pro")
+        create_agent_from_template("appointment_scheduler", "My Booking Bot")
+        create_agent_from_template("sales_qualifier", modifications={"temperature": 0.9})
+    """
+    if not AGENT_TEMPLATES:
+        return format_error("No templates available", "Template file may be missing")
+    
+    template = AGENT_TEMPLATES.get(template_name)
+    if not template:
+        return format_error(
+            f"Template '{template_name}' not found",
+            f"Available: {', '.join(AGENT_TEMPLATES.keys())}"
+        )
+    
+    try:
+        # Extract configuration
+        config = template.get("config", {})
+        
+        # Apply modifications if provided
+        if modifications:
+            for key, value in modifications.items():
+                if key in config:
+                    config[key] = value
+                elif key in config.get("voice_settings", {}):
+                    config["voice_settings"][key] = value
+        
+        # Create the agent
+        name = custom_name or template.get("name", "Agent from Template")
+        
+        # Get voice settings
+        voice_settings = config.get("voice_settings", {})
+        
+        # Create agent with base configuration
+        result = await create_agent(
+            name=name,
+            system_prompt=config.get("system_prompt"),
+            first_message=config.get("first_message"),
+            voice_id=config.get("voice_id"),
+            llm_model=config.get("llm_model"),
+            temperature=str(config.get("temperature", 0.7)),
+            language=config.get("language", "en")
+        )
+        
+        # If agent created successfully and we have voice settings, configure voice
+        if result.get("success") and voice_settings:
+            agent_id = result.get("data", {}).get("agent_id")
+            if agent_id:
+                await configure_voice(
+                    agent_id=agent_id,
+                    voice_id=config.get("voice_id"),
+                    stability=str(voice_settings.get("stability", 0.5)),
+                    similarity_boost=str(voice_settings.get("similarity_boost", 0.8)),
+                    speed=str(voice_settings.get("speed", 1.0))
+                )
+        
+        return format_success(
+            f"Agent created from template: {template_name}",
+            {
+                "agent": result.get("data"),
+                "template_used": template_name,
+                "description": template.get("description")
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to create agent from template: {e}")
+        return format_error(str(e))
+
+
+@mcp.tool()
+async def suggest_voice_for_use_case(use_case: str) -> Dict[str, Any]:
+    """
+    Suggest the best voice configuration for a specific use case.
+    
+    Args:
+        use_case: Description of the use case or business context
+    
+    Returns:
+        Recommended voice configurations with rationale
+    
+    Examples:
+        suggest_voice_for_use_case("customer support for tech company")
+        suggest_voice_for_use_case("friendly appointment booking")
+        suggest_voice_for_use_case("serious legal consultation")
+    """
+    use_case_lower = use_case.lower()
+    suggestions = []
+    
+    # Check each preset for matching use cases
+    for preset_name, preset_data in VOICE_PRESETS.items():
+        score = 0
+        matches = []
+        
+        # Check use cases
+        for uc in preset_data.get("use_cases", []):
+            if uc.lower() in use_case_lower or use_case_lower in uc.lower():
+                score += 2
+                matches.append(f"use case: {uc}")
+        
+        # Check personality traits
+        personality = preset_data.get("personality", "")
+        for trait in personality.split(", "):
+            if trait.lower() in use_case_lower:
+                score += 1
+                matches.append(f"trait: {trait}")
+        
+        # Check description
+        if any(word in use_case_lower for word in preset_name.lower().split("_")):
+            score += 1
+            matches.append(f"name match: {preset_name}")
+        
+        if score > 0:
+            suggestions.append({
+                "preset": preset_name,
+                "score": score,
+                "voice_id": preset_data.get("voice_id"),
+                "description": preset_data.get("description"),
+                "matches": matches,
+                "config": {
+                    "stability": preset_data.get("stability"),
+                    "similarity_boost": preset_data.get("similarity_boost"),
+                    "speed": preset_data.get("speed")
+                }
+            })
+    
+    # Sort by score
+    suggestions.sort(key=lambda x: x["score"], reverse=True)
+    
+    if not suggestions:
+        # Provide default suggestion
+        return format_success(
+            "No specific match found, suggesting default professional voice",
+            {
+                "recommendation": VOICE_PRESETS.get("professional"),
+                "reason": "Professional voice works well for most business contexts"
+            }
+        )
+    
+    return format_success(
+        f"Found {len(suggestions)} voice suggestions for: {use_case}",
+        {
+            "best_match": suggestions[0] if suggestions else None,
+            "alternatives": suggestions[1:3] if len(suggestions) > 1 else [],
+            "all_suggestions": suggestions
+        }
+    )
+
+
+@mcp.tool()
+async def validate_prompt(system_prompt: str) -> Dict[str, Any]:
+    """
+    Validate and improve an agent's system prompt.
+    
+    Args:
+        system_prompt: The prompt to validate and analyze
+    
+    Returns:
+        Analysis with suggestions for improvement
+    
+    Checks for:
+        - Clarity and structure
+        - Specific instructions
+        - Personality definition
+        - Escalation handling
+        - Length appropriateness
+    """
+    issues = []
+    suggestions = []
+    score = 100
+    
+    # Check length
+    prompt_length = len(system_prompt)
+    if prompt_length < 50:
+        issues.append("Prompt is too short (< 50 chars)")
+        suggestions.append("Add more specific instructions about the agent's role and behavior")
+        score -= 20
+    elif prompt_length > 2000:
+        issues.append("Prompt may be too long (> 2000 chars)")
+        suggestions.append("Consider breaking into clear sections or removing redundancy")
+        score -= 10
+    
+    # Check for key components
+    prompt_lower = system_prompt.lower()
+    
+    # Role definition
+    if not any(word in prompt_lower for word in ["you are", "your role", "act as", "you're"]):
+        issues.append("Missing clear role definition")
+        suggestions.append("Start with 'You are a...' to clearly define the agent's role")
+        score -= 15
+    
+    # Behavioral instructions
+    if not any(word in prompt_lower for word in ["help", "assist", "support", "provide", "answer"]):
+        issues.append("Missing action verbs")
+        suggestions.append("Include specific actions the agent should take")
+        score -= 10
+    
+    # Tone/personality
+    if not any(word in prompt_lower for word in ["friendly", "professional", "helpful", "polite", "tone", "manner"]):
+        issues.append("No personality or tone specified")
+        suggestions.append("Define the communication style (e.g., 'maintain a friendly, professional tone')")
+        score -= 10
+    
+    # Escalation or limitations
+    if not any(word in prompt_lower for word in ["don't know", "unsure", "escalate", "cannot", "unable"]):
+        suggestions.append("Consider adding guidance for handling unknown questions or escalation")
+        score -= 5
+    
+    # Structure check
+    if "\n" in system_prompt and system_prompt.count("\n") > 1:
+        # Has structure
+        score += 5
+    else:
+        suggestions.append("Consider using numbered lists or paragraphs for better organization")
+    
+    # Specific examples
+    if any(word in prompt_lower for word in ["example", "such as", "like", "including"]):
+        score += 5
+    else:
+        suggestions.append("Add specific examples of expected behavior or responses")
+    
+    # Calculate final score
+    score = max(0, min(100, score))
+    
+    # Determine quality level
+    if score >= 80:
+        quality = "Excellent"
+    elif score >= 60:
+        quality = "Good"
+    elif score >= 40:
+        quality = "Fair"
+    else:
+        quality = "Needs Improvement"
+    
+    return format_success(
+        f"Prompt validation complete - Quality: {quality}",
+        {
+            "score": score,
+            "quality": quality,
+            "character_count": prompt_length,
+            "issues": issues if issues else ["No major issues found"],
+            "suggestions": suggestions if suggestions else ["Prompt is well-structured"],
+            "has_role": "you are" in prompt_lower,
+            "has_instructions": any(word in prompt_lower for word in ["help", "assist"]),
+            "has_personality": any(word in prompt_lower for word in ["friendly", "professional"]),
+            "has_structure": "\n" in system_prompt
+        }
+    )
+
+
+# ============================================================
 # Main entry point
 # ============================================================
 
@@ -911,9 +1414,10 @@ if __name__ == "__main__":
     
     if args.test:
         # Test mode - verify all components
-        print(f"Server: elevenlabs-agents v0.2.0")
-        print(f"Tools: {len(mcp.tools)} (expecting 12)")
+        print(f"Server: elevenlabs-agents v0.3.0")
+        print(f"Tools: {len(mcp.tools)} registered")
         print(f"Config: API key {Config.mask_api_key()}")
+        print(f"Templates: {len(PROMPT_TEMPLATES)} prompts, {len(VOICE_PRESETS)} voices, {len(AGENT_TEMPLATES)} agents")
         print("All components loaded successfully!")
     else:
         # Run server
