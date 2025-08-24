@@ -71,32 +71,92 @@ python src/server.py
 **Status**: ✅ Production Ready - All major features fully tested and working
 
 ### 2. ElevenLabs Knowledge Server  
-*Advanced knowledge management and analytics*
+*Advanced knowledge management and RAG configuration*
 
 **Core Capabilities:**
 - ✅ **Document Management**: Upload PDFs, web pages, text files
 - ✅ **RAG Configuration**: Optimize retrieval for better responses
-- ✅ **Conversation Analytics**: Performance insights and metrics
-- ✅ **Data Export**: Conversation transcripts and usage reports
-- ✅ **Real-time Monitoring**: Track agent performance over time
+- ✅ **Knowledge Base Statistics**: Monitor document usage and size
+- ✅ **Index Management**: Rebuild search indexes for performance
+- ✅ **Multi-Agent Support**: Share knowledge across agents
 
 **Key Tools:**
 - `add_document_url` - Import web content to knowledge base
+- `add_document_text` - Add text documents directly
 - `configure_rag` - Optimize document retrieval settings
+- `rebuild_index` - Refresh search indexes
+- `get_knowledge_base_size` - Monitor storage usage
+
+**Status**: ✅ Production Ready - Core functionality verified and stable
+
+### 3. ElevenLabs Conversations Server
+*Conversation management and analytics*
+
+**Core Capabilities:**
+- ✅ **Conversation Access**: List, retrieve, and delete conversations
+- ✅ **Transcript Management**: Export and analyze conversation text
+- ✅ **Audio Retrieval**: Access conversation recordings
+- ✅ **Performance Analytics**: Deep conversation insights
+- ✅ **Feedback Collection**: User satisfaction tracking
+
+**Key Tools:**
+- `list_conversations` - Browse conversation history
+- `get_conversation_audio` - Download conversation recordings
 - `analyze_conversation` - Extract insights from conversation logs
 - `performance_report` - Generate detailed analytics reports
 - `export_conversations` - Bulk data export for analysis
 
-**Status**: ✅ Production Ready - Core functionality verified and stable
+**Status**: ✅ Production Ready - Full conversation API coverage
+
+### 4. ElevenLabs Tools Server
+*MCP server and tool management*
+
+**Core Capabilities:**
+- ✅ **Tool Management**: Create, update, and delete tools
+- ✅ **MCP Server Control**: Deploy and manage MCP servers
+- ✅ **Approval Policies**: Configure tool approval workflows
+- ✅ **Secrets Management**: Secure credential storage
+- ✅ **Dependency Tracking**: Monitor tool usage by agents
+
+**Key Tools:**
+- `list_tools` - Browse available tools and integrations
+- `create_mcp_server` - Deploy new MCP servers
+- `configure_approval_policy` - Set up tool approval rules
+- `manage_secrets` - Handle secure credentials
+- `get_tool_dependent_agents` - Track tool usage
+
+**Status**: ✅ Production Ready - Complete tools API implementation
+
+### 5. ElevenLabs Testing Server
+*Agent testing and simulation framework*
+
+**Core Capabilities:**
+- ✅ **Test Management**: Create and run test suites
+- ✅ **Test Invocations**: Execute and monitor test runs
+- ✅ **Batch Testing**: Run multiple tests simultaneously
+- ✅ **Result Analysis**: Detailed test performance metrics
+- ✅ **Continuous Testing**: Automated test scheduling
+
+**Key Tools:**
+- `create_test` - Design test scenarios
+- `run_test` - Execute single test cases
+- `batch_test` - Run multiple tests in parallel
+- `get_test_results` - Retrieve detailed test outcomes
+- `get_test_summaries` - Generate test reports
+
+**Status**: ✅ Production Ready - Complete testing API coverage
 
 ## 🏗️ Architecture
 
-This project contains two standalone MCP servers:
+This project contains five standalone MCP servers:
 
 ```
 elevenlabs-mcp-server/
-├── elevenlabs-agents/      # Agent management server
-└── elevenlabs-knowledge/   # Knowledge base server
+├── elevenlabs-agents/        # Agent management server
+├── elevenlabs-knowledge/     # Knowledge base server
+├── elevenlabs-conversations/ # Conversation analytics server
+├── elevenlabs-tools/         # MCP tools and integrations server
+└── elevenlabs-testing/       # Testing and simulation server
 ```
 
 Each server is completely independent and deployable to FastMCP Cloud.

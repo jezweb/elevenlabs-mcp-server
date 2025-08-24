@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Agent Server Enhancements**:
+  - 7 new helper tools for better user experience
+  - Resource templates system (prompts, voices, agents)
+  - `simulate_conversation` - Test agent responses
+  - `list_voices` - Browse available ElevenLabs voices
+  - `get_prompt_template` - Access ready-to-use prompts
+  - `get_voice_preset` - Get pre-configured voice settings
+  - `get_agent_template` - Complete agent configurations
+  - `get_agent_link` - Generate shareable agent URLs
+  - `list_popular_agents` - Discover trending agent types
+- **Resource Files**:
+  - 10 prompt templates for common use cases
+  - 10 voice presets with optimized settings
+  - 10 agent templates ready to deploy
+- **Documentation**:
+  - PROMPTING_GUIDE.md - Comprehensive prompt writing guide
+  - VOICE_SELECTION.md - Voice selection matrix and recommendations
+
+### Restored
+- **elevenlabs-conversations server** - Full conversation API implementation
+  - 11 tools for conversation management and analytics
+  - Audio retrieval with signed URLs
+  - Feedback collection and transcript export
+  - Performance reporting and bulk operations
+- **elevenlabs-tools server** (renamed from integrations)
+  - 16 tools for MCP server and tool management
+  - Complete tools API endpoint coverage
+  - Approval policies and secrets management
+  - Dependency tracking across agents
+
+### Changed
+- Project structure expanded from 3 to 5 specialized servers
+- Updated architecture documentation to reflect new structure
+- Improved separation of concerns between servers
+
 ### Fixed
 - Fixed `simulate_conversation` API payload structure using `simulation_specification` format
 - Corrected all testing endpoint URLs by removing double `/v1/v1/` prefixes

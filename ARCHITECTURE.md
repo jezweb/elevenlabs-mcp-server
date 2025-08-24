@@ -1,7 +1,7 @@
 # ElevenLabs MCP Server Architecture
 
 ## Overview
-This project implements three specialized MCP (Model Context Protocol) servers for ElevenLabs Conversational AI platform using FastMCP framework. The servers are designed for cloud deployment with a focus on simplicity, maintainability, and performance.
+This project implements five specialized MCP (Model Context Protocol) servers for ElevenLabs Conversational AI platform using FastMCP framework. The servers are designed for cloud deployment with a focus on simplicity, maintainability, and performance.
 
 ## System Architecture
 
@@ -9,21 +9,21 @@ This project implements three specialized MCP (Model Context Protocol) servers f
 ┌─────────────────────────────────────────────────────────────────────┐
 │                          Client Applications                         │
 │                        (Claude, IDEs, etc.)                         │
-└─────────┬─────────────────┬─────────────────┬─────────────────────┘
-          │                 │                 │
-          ▼                 ▼                 ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ ElevenLabs      │ │ ElevenLabs      │ │ ElevenLabs      │
-│ Agents Server   │ │ Knowledge Server│ │ Testing Server  │
-├─────────────────┤ ├─────────────────┤ ├─────────────────┤
-│ • Agent CRUD    │ │ • Document Mgmt │ │ • Simulation    │
-│ • Voice Config  │ │ • RAG Setup     │ │ • Test Creation │
-│ • Transfer Setup│ │ • Conversation  │ │ • Validation    │
-│ • Multi-Agent   │ │   Analytics     │ │ • Performance   │
-└────────┬────────┘ └────────┬────────┘ └────────┬────────┘
-         │                   │                   │
-         └───────────────────┼───────────────────┘
-                             ▼
+└───┬─────────────┬─────────────┬─────────────┬─────────────┬────────┘
+    │             │             │             │             │
+    ▼             ▼             ▼             ▼             ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│ Agents   │ │Knowledge │ │Conversa- │ │  Tools   │ │ Testing  │
+│ Server   │ │  Server  │ │  tions   │ │  Server  │ │  Server  │
+├──────────┤ ├──────────┤ ├──────────┤ ├──────────┤ ├──────────┤
+│• Agent   │ │• Docs    │ │• List    │ │• Tool    │ │• Tests   │
+│  CRUD    │ │• RAG     │ │• Audio   │ │  CRUD    │ │• Run     │
+│• Voice   │ │• Index   │ │• Export  │ │• MCP     │ │• Results │
+│• Transfer│ │• Size    │ │• Analyze │ │• Secrets │ │• Batch   │
+└────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘
+     │            │            │            │            │
+     └────────────┴────────────┼────────────┴────────────┘
+                               ▼
               ┌─────────────────────────────────────┐
               │      ElevenLabs API Platform        │
               │  (Conversational AI, TTS, etc.)     │
@@ -34,25 +34,35 @@ This project implements three specialized MCP (Model Context Protocol) servers f
 
 ```
 elevenlabs-mcp-server/
-├── elevenlabs-agents/      # Agent management server
+├── elevenlabs-agents/           # Agent management server
 │   ├── src/
-│   │   ├── server.py      # Entry point (module-level mcp)
-│   │   ├── shared/        # Server utilities
-│   │   └── tools/         # Agent-specific tools
+│   │   ├── server.py           # Entry point (module-level mcp)
+│   │   ├── utils.py            # Server utilities
+│   │   └── resources/          # Templates and presets
 │   └── requirements.txt
 │
-├── elevenlabs-knowledge/   # Knowledge base server
+├── elevenlabs-knowledge/        # Knowledge base server
 │   ├── src/
-│   │   ├── server.py      # Entry point (module-level mcp)
-│   │   ├── shared/        # Server utilities
-│   │   └── tools/         # Knowledge-specific tools
+│   │   ├── server.py           # Entry point (module-level mcp)
+│   │   └── utils.py            # Server utilities
 │   └── requirements.txt
 │
-└── elevenlabs-testing/     # Testing and simulation server
+├── elevenlabs-conversations/    # Conversation management server
+│   ├── src/
+│   │   ├── server.py           # Entry point (module-level mcp)
+│   │   └── utils.py            # Server utilities
+│   └── requirements.txt
+│
+├── elevenlabs-tools/            # MCP tools and integrations server
+│   ├── src/
+│   │   ├── server.py           # Entry point (module-level mcp)
+│   │   └── utils.py            # Server utilities
+│   └── requirements.txt
+│
+└── elevenlabs-testing/          # Testing and simulation server
     ├── src/
-    │   ├── server.py      # Entry point (module-level mcp)
-    │   ├── shared/        # Server utilities
-    │   └── tools/         # Testing-specific tools
+    │   ├── server.py           # Entry point (module-level mcp)
+    │   └── utils.py            # Server utilities
     └── requirements.txt
 ```
 
@@ -118,22 +128,56 @@ elevenlabs-mcp-server/
 - Performance analytics
 - Data collection schemas
 
+### ElevenLabs Conversations Server
+
+**Purpose**: Manage conversation data, transcripts, audio, and analytics.
+
+**Core Components**:
+- **Conversation Access**: List, retrieve, and delete conversations
+- **Audio Management**: Access and export conversation recordings
+- **Transcript Tools**: Export and process conversation text
+- **Analytics**: Performance metrics and insights
+
+**Key Features**:
+- Complete conversation history access
+- Audio file retrieval with signed URLs
+- Transcript extraction and export
+- User feedback collection
+- Bulk export capabilities
+
+### ElevenLabs Tools Server
+
+**Purpose**: Manage MCP servers, tools, approval policies, and secrets.
+
+**Core Components**:
+- **Tool Management**: CRUD operations for tools
+- **MCP Server Control**: Deploy and manage MCP servers
+- **Approval Policies**: Configure tool approval workflows
+- **Secrets Management**: Secure credential storage
+
+**Key Features**:
+- Tool lifecycle management
+- MCP server deployment
+- Dependency tracking
+- Approval workflow configuration
+- Secure secrets handling
+
 ### ElevenLabs Testing Server
 
 **Purpose**: Provide comprehensive testing, simulation, and validation tools for conversational AI agents.
 
 **Core Components**:
-- **Agent Simulation**: Real-time conversation testing
 - **Test Management**: Create, configure, and run test scenarios
-- **Performance Validation**: Response quality and timing analysis
-- **Integration Testing**: End-to-end workflow verification
+- **Test Invocations**: Execute and monitor test runs
+- **Batch Testing**: Run multiple tests simultaneously
+- **Result Analysis**: Detailed test performance metrics
 
 **Key Features**:
-- Interactive conversation simulation
-- Automated test case creation
-- Success/failure condition validation
+- Interactive test creation
+- Automated test execution
+- Batch testing capabilities
+- Success/failure validation
 - Performance benchmarking
-- Test result analysis
 
 ## Shared Components
 
@@ -181,6 +225,18 @@ Server 2:
   Requirements: elevenlabs-knowledge/requirements.txt
 
 Server 3:
+  Name: elevenlabs-conversations-{username}
+  Repository: {username}/elevenlabs-mcp-server
+  Entrypoint: elevenlabs-conversations/src/server.py
+  Requirements: elevenlabs-conversations/requirements.txt
+
+Server 4:
+  Name: elevenlabs-tools-{username}
+  Repository: {username}/elevenlabs-mcp-server
+  Entrypoint: elevenlabs-tools/src/server.py
+  Requirements: elevenlabs-tools/requirements.txt
+
+Server 5:
   Name: elevenlabs-testing-{username}
   Repository: {username}/elevenlabs-mcp-server
   Entrypoint: elevenlabs-testing/src/server.py

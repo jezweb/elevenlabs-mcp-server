@@ -1,4 +1,4 @@
-"""ElevenLabs Integrations MCP Server.
+"""ElevenLabs Tools MCP Server.
 
 Provides tools for managing MCP servers, tools, approvals, and secrets.
 """
@@ -41,7 +41,7 @@ client = ElevenLabsClient(Config.API_KEY)
 
 # Initialize FastMCP server
 mcp = FastMCP(
-    name="elevenlabs-integrations",
+    name="elevenlabs-tools",
     instructions="Manage ElevenLabs MCP servers, tools, and integrations"
 )
 
@@ -50,7 +50,7 @@ mcp = FastMCP(
 async def lifespan(app):
     """Lifespan context manager for the MCP server."""
     # Startup
-    logger.info("Starting ElevenLabs Integrations MCP server")
+    logger.info("Starting ElevenLabs Tools MCP server")
     
     # Test connection
     if not await client.test_connection():
@@ -59,12 +59,12 @@ async def lifespan(app):
     else:
         logger.info("ElevenLabs API connection verified")
     
-    logger.info("ElevenLabs Integrations MCP server started successfully")
+    logger.info("ElevenLabs Tools MCP server started successfully")
     
     yield
     
     # Shutdown
-    logger.info("Shutting down ElevenLabs Integrations MCP server")
+    logger.info("Shutting down ElevenLabs Tools MCP server")
     if client:
         await client.close()
 
