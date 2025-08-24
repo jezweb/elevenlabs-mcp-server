@@ -34,7 +34,7 @@ logger = setup_logging(__name__)
 # Initialize FastMCP server
 mcp = FastMCP(
     name="elevenlabs-integrations",
-    description="Manage ElevenLabs MCP servers, tools, and integrations"
+    instructions="Manage ElevenLabs MCP servers, tools, and integrations"
 )
 
 # Global client instance

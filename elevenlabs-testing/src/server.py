@@ -32,7 +32,7 @@ logger = setup_logging(__name__)
 # Initialize FastMCP server
 mcp = FastMCP(
     name="elevenlabs-testing",
-    description="Test and simulate ElevenLabs conversational AI agents"
+    instructions="Test and simulate ElevenLabs conversational AI agents"
 )
 
 # Global client instance

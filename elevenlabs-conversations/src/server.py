@@ -32,7 +32,7 @@ logger = setup_logging(__name__)
 # Initialize FastMCP server
 mcp = FastMCP(
     name="elevenlabs-conversations",
-    description="Manage ElevenLabs conversation history and playback"
+    instructions="Manage ElevenLabs conversation history and playback"
 )
 
 # Global client instance
