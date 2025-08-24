@@ -758,15 +758,24 @@ async def get_dependent_agents(document_id: str) -> Dict[str, Any]:
 
 
 @mcp.tool()
-async def get_knowledge_base_size() -> Dict[str, Any]:
+async def get_knowledge_base_size(agent_id: str) -> Dict[str, Any]:
     """
-    Get total knowledge base size and statistics.
+    Get knowledge base size and statistics for a specific agent.
+    
+    Args:
+        agent_id: Agent to get knowledge base size for
     
     Returns:
         Storage metrics and document counts
     """
+    if not validate_elevenlabs_id(agent_id, 'agent'):
+        return format_error(
+            f"Invalid agent ID format: {agent_id}",
+            "Use format: agent_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        )
+    
     try:
-        result = await client._request("GET", "/convai/knowledge-base/size")
+        result = await client._request("GET", f"/v1/convai/agent/{agent_id}/knowledge-base/size")
         return format_success(
             "Knowledge base statistics retrieved",
             {"statistics": result}

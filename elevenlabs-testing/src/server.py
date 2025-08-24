@@ -130,7 +130,7 @@ async def list_tests(
         
         result = await client._request(
             "GET",
-            "/convai/tests",
+            "/v1/convai/agent-testing",
             params=params,
             use_cache=True
         )
@@ -188,7 +188,7 @@ async def get_test(
     try:
         result = await client._request(
             "GET",
-            f"/convai/tests/{test_id}",
+            f"/v1/convai/agent-testing/{test_id}",
             use_cache=True
         )
         
@@ -263,7 +263,7 @@ async def create_test(
         
         result = await client._request(
             "POST",
-            "/convai/tests",
+            "/v1/convai/agent-testing/create",
             json_data=data
         )
         
@@ -335,7 +335,7 @@ async def update_test(
         
         result = await client._request(
             "PUT",
-            f"/convai/tests/{test_id}",
+            f"/v1/convai/agent-testing/{test_id}",
             json_data=data
         )
         
@@ -385,7 +385,7 @@ async def delete_test(
     try:
         await client._request(
             "DELETE",
-            f"/convai/tests/{test_id}"
+            f"/v1/convai/agent-testing/{test_id}"
         )
         
         return format_success(
@@ -418,7 +418,7 @@ async def get_test_summaries(
         
         result = await client._request(
             "POST",
-            "/convai/tests/summaries",
+            "/v1/convai/agent-testing/summaries",
             json_data={"test_ids": test_ids}
         )
         
@@ -491,7 +491,7 @@ async def run_tests_on_agent(
         
         result = await client._request(
             "POST",
-            f"/convai/agents/{agent_id}/run-tests",
+            f"/v1/convai/agents/{agent_id}/run-tests",
             json_data=data
         )
         
@@ -551,7 +551,7 @@ async def get_test_invocation(
     try:
         result = await client._request(
             "GET",
-            f"/convai/test-invocations/{invocation_id}",
+            f"/v1/convai/test-invocations/{invocation_id}",
             use_cache=True
         )
         
@@ -586,7 +586,7 @@ async def resubmit_test(
         
         result = await client._request(
             "POST",
-            f"/convai/test-invocations/{invocation_id}/resubmit",
+            f"/v1/convai/test-invocations/{invocation_id}/resubmit",
             json_data={"retry_failed_only": retry_failed_only}
         )
         
@@ -684,14 +684,25 @@ async def simulate_conversation(
     
     try:
         data = {
-            "message": user_message,
-            "context": context or {},
-            "max_turns": max_turns
+            "simulation_specification": {
+                "simulated_user_config": {
+                    "first_message": user_message,
+                    "language": "en"
+                }
+            }
         }
+        
+        # Add context if provided
+        if context:
+            data["simulation_specification"]["context"] = context
+            
+        # Add max_turns if specified
+        if max_turns != 10:  # Only include if different from default
+            data["simulation_specification"]["max_turns"] = max_turns
         
         result = await client._request(
             "POST",
-            f"/convai/agents/{agent_id}/simulate-conversation",
+            f"/v1/convai/agents/{agent_id}/simulate-conversation",
             json_data=data
         )
         

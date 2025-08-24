@@ -689,10 +689,23 @@ async def get_agent_link(agent_id: str) -> Dict[str, Any]:
         return format_error("Invalid agent ID format")
     
     try:
-        result = await client._request("GET", f"/convai/agents/{agent_id}/link")
+        result = await client._request("GET", f"/v1/convai/agents/{agent_id}/link")
+        
+        # Check if link is available
+        link = result.get("link")
+        if not link:
+            return format_success(
+                "Agent link not available",
+                {
+                    "link": None,
+                    "agent_id": agent_id,
+                    "message": "Agent does not have a shareable link configured. Enable sharing in agent settings to generate a link."
+                }
+            )
+        
         return format_success(
             "Agent link retrieved",
-            {"link": result.get("link"), "agent_id": agent_id}
+            {"link": link, "agent_id": agent_id}
         )
     except Exception as e:
         logger.error(f"Failed to get agent link: {e}")

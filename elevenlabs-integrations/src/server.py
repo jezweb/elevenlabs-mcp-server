@@ -468,45 +468,6 @@ async def create_mcp_server(
         return format_error(str(e))
 
 
-@mcp.tool()
-async def list_mcp_servers(
-    agent_id: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    List MCP servers.
-    
-    Args:
-        agent_id: Filter by agent
-    
-    Returns:
-        List of MCP server configurations
-    """
-    try:
-        if agent_id and not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error("Invalid agent ID format", "Use format: agent_XXXX")
-        
-        params = {}
-        if agent_id:
-            params["agent_id"] = agent_id
-        
-        result = await client._request(
-            "GET",
-            "/convai/mcp/servers",
-            params=params,
-            use_cache=True
-        )
-        
-        servers = result.get("servers", [])
-        
-        return format_success(
-            f"Found {len(servers)} MCP servers",
-            {"servers": servers, "count": len(servers)}
-        )
-        
-    except Exception as e:
-        logger.error(f"Failed to list MCP servers: {e}")
-        return format_error(str(e))
-
 
 @mcp.tool()
 async def get_mcp_server(
