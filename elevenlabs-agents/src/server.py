@@ -7,9 +7,8 @@ Manages conversational AI agents, configuration, and multi-agent orchestration.
 
 import sys
 import logging
-from typing import Dict, Any, Optional, List, Annotated
+from typing import Dict, Any, Optional, List
 from contextlib import asynccontextmanager
-from pydantic import Field
 
 from fastmcp import FastMCP
 from shared import Config, ElevenLabsClient, format_success, format_error, validate_uuid, validate_elevenlabs_id
@@ -384,9 +383,9 @@ async def update_system_prompt(
 async def configure_voice(
     agent_id: str,
     voice_id: str,
-    stability: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Voice consistency (0.0-1.0)")] = 0.5,
-    similarity_boost: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Voice clarity/consistency (0.0-1.0)")] = 0.8,
-    speed: Annotated[Optional[float], Field(ge=0.7, le=1.2, description="Speech rate (0.7-1.2, 1.0=normal)")] = 1.0
+    stability: Optional[float] = 0.5,
+    similarity_boost: Optional[float] = 0.8,
+    speed: Optional[float] = 1.0
 ) -> Dict[str, Any]:
     """
     Configure agent voice settings.
@@ -529,8 +528,8 @@ async def configure_voice(
 async def set_llm_config(
     agent_id: str,
     model: Optional[str] = None,
-    temperature: Annotated[Optional[float], Field(ge=0.0, le=2.0, description="Response creativity (0.0-2.0)")] = None,
-    max_tokens: Annotated[Optional[int], Field(ge=1, le=8192, description="Maximum response length (1-8192)")] = None
+    temperature: Optional[float] = None,
+    max_tokens: Optional[int] = None
 ) -> Dict[str, Any]:
     """
     Configure agent LLM settings.
@@ -548,6 +547,12 @@ async def set_llm_config(
         return format_error("Invalid agent ID format")
     
     try:
+        # Validate parameters
+        if temperature is not None and (temperature < 0.0 or temperature > 2.0):
+            return format_error("temperature must be between 0.0 and 2.0")
+        if max_tokens is not None and (max_tokens < 1 or max_tokens > 8192):
+            return format_error("max_tokens must be between 1 and 8192")
+        
         llm_config = {}
         if model:
             llm_config["model"] = model

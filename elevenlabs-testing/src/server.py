@@ -29,35 +29,33 @@ from src.utils import (
 # Setup logging
 logger = setup_logging(__name__)
 
+# Validate configuration
+if not Config.API_KEY:
+    logger.error("ELEVENLABS_API_KEY not set")
+    sys.exit(1)
+
+# Initialize ElevenLabs client at module level
+client = ElevenLabsClient()
+
 # Initialize FastMCP server
 mcp = FastMCP(
     name="elevenlabs-testing",
     instructions="Test and simulate ElevenLabs conversational AI agents"
 )
 
-# Global client instance
-client: Optional[ElevenLabsClient] = None
-
 
 @asynccontextmanager
 async def lifespan(app):
     """Lifespan context manager for the MCP server."""
-    global client
-    
     # Startup
     logger.info("Starting ElevenLabs Testing MCP server")
-    
-    # Initialize client
-    if not Config.API_KEY:
-        logger.error("ELEVENLABS_API_KEY not set")
-        sys.exit(1)
-    
-    client = ElevenLabsClient()
     
     # Test connection
     if not await client.test_connection():
         logger.error("Failed to connect to ElevenLabs API")
-        sys.exit(1)
+        logger.warning("Some features may be unavailable")
+    else:
+        logger.info("ElevenLabs API connection verified")
     
     logger.info("ElevenLabs Testing MCP server started successfully")
     

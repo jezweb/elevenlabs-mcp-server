@@ -6,10 +6,9 @@ Manages knowledge base, RAG configuration, and conversation analytics.
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Annotated
+from typing import Dict, Any, Optional, List
 import json
 from contextlib import asynccontextmanager
-from pydantic import Field
 
 from fastmcp import FastMCP
 from shared import (
@@ -347,10 +346,10 @@ async def delete_document(document_id: str) -> Dict[str, Any]:
 @mcp.tool()
 async def configure_rag(
     agent_id: str,
-    chunk_size: Annotated[Optional[int], Field(ge=100, le=4000, description="Characters per chunk (100-4000)")] = 512,
-    chunk_overlap: Annotated[Optional[int], Field(ge=0, le=500, description="Overlap between chunks (0-500)")] = 50,
-    top_k: Annotated[Optional[int], Field(ge=1, le=20, description="Number of results to retrieve (1-20)")] = 5,
-    similarity_threshold: Annotated[Optional[float], Field(ge=0.0, le=1.0, description="Minimum relevance score (0.0-1.0)")] = 0.7
+    chunk_size: Optional[int] = 512,
+    chunk_overlap: Optional[int] = 50,
+    top_k: Optional[int] = 5,
+    similarity_threshold: Optional[float] = 0.7
 ) -> Dict[str, Any]:
     """
     Configure RAG settings for an agent.
@@ -378,13 +377,15 @@ async def configure_rag(
     
     try:
         # Validate parameters
-        if chunk_size < 100 or chunk_size > 4000:
+        if chunk_size is not None and (chunk_size < 100 or chunk_size > 4000):
             return format_error("chunk_size must be between 100 and 4000")
-        if chunk_overlap >= chunk_size:
+        if chunk_overlap is not None and chunk_size is not None and chunk_overlap >= chunk_size:
             return format_error("chunk_overlap must be less than chunk_size")
-        if top_k < 1 or top_k > 20:
+        if chunk_overlap is not None and (chunk_overlap < 0 or chunk_overlap > 500):
+            return format_error("chunk_overlap must be between 0 and 500")
+        if top_k is not None and (top_k < 1 or top_k > 20):
             return format_error("top_k must be between 1 and 20")
-        if similarity_threshold < 0 or similarity_threshold > 1:
+        if similarity_threshold is not None and (similarity_threshold < 0 or similarity_threshold > 1):
             return format_error("similarity_threshold must be between 0.0 and 1.0")
         
         rag_config = {
