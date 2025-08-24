@@ -7,7 +7,7 @@ Manages conversational AI agents, configuration, and multi-agent orchestration.
 
 import sys
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Union
 from contextlib import asynccontextmanager
 
 from fastmcp import FastMCP
@@ -126,6 +126,16 @@ async def create_agent(
             "First message too short", 
             "Provide a greeting at least 5 characters long"
         )
+    
+    # Type coercion for parameters (handle MCP string inputs)
+    if temperature is not None:
+        try:
+            temperature = float(temperature)
+        except (ValueError, TypeError):
+            return format_error(
+                "Temperature must be a number",
+                "Use a value between 0.0 (deterministic) and 1.0 (creative)"
+            )
     
     # Validate temperature
     if temperature is not None:

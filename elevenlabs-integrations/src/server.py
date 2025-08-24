@@ -37,7 +37,7 @@ if not Config.API_KEY:
     sys.exit(1)
 
 # Initialize ElevenLabs client at module level
-client = ElevenLabsClient()
+client = ElevenLabsClient(Config.API_KEY)
 
 # Initialize FastMCP server
 mcp = FastMCP(
