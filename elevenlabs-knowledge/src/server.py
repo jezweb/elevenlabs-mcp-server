@@ -346,53 +346,49 @@ async def delete_document(document_id: str) -> Dict[str, Any]:
 @mcp.tool()
 async def configure_rag(
     agent_id: str,
-    chunk_size: Optional[int] = 512,
-    chunk_overlap: Optional[int] = 50,
-    top_k: Optional[int] = 5,
-    similarity_threshold: Optional[float] = 0.7
+    enabled: Optional[bool] = True,
+    embedding_model: Optional[str] = "e5_mistral_7b_instruct", 
+    max_documents_length: Optional[str] = "10000"
 ) -> Dict[str, Any]:
     """
     Configure RAG settings for an agent.
     
     Args:
         agent_id: Agent to configure (format: agent_XXXX or UUID)
-        chunk_size: Characters per chunk (100-4000, recommended: 512-1024)
-        chunk_overlap: Overlap between chunks (0-500, recommended: 10-20% of chunk_size)
-        top_k: Number of results to retrieve (1-20, recommended: 3-7 for balanced relevance)
-        similarity_threshold: Minimum relevance score (0.0-1.0, recommended: 0.7+ for accuracy)
+        enabled: Whether to enable RAG for this agent (default: True)
+        embedding_model: Model for vector embeddings (default: "e5_mistral_7b_instruct")
+        max_documents_length: Maximum length for documents (default: "10000")
     
     Returns:
         Configuration result with RAG settings applied
         
     Example:
-        configure_rag("agent_abc123", chunk_size=1024, chunk_overlap=100, top_k=5, similarity_threshold=0.75)
+        configure_rag("agent_abc123", enabled=True, max_documents_length="15000")
         
     Note:
-        - Larger chunk_size = more context but less precision
-        - Higher top_k = more results but potentially more noise
-        - Higher similarity_threshold = more accurate but potentially fewer results
+        - RAG enhances agent responses with knowledge base content
+        - Different embedding models may provide different performance
+        - Larger max_documents_length increases context but may impact latency
     """
     if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
     
     try:
-        # Validate parameters
-        if chunk_size is not None and (chunk_size < 100 or chunk_size > 4000):
-            return format_error("chunk_size must be between 100 and 4000")
-        if chunk_overlap is not None and chunk_size is not None and chunk_overlap >= chunk_size:
-            return format_error("chunk_overlap must be less than chunk_size")
-        if chunk_overlap is not None and (chunk_overlap < 0 or chunk_overlap > 500):
-            return format_error("chunk_overlap must be between 0 and 500")
-        if top_k is not None and (top_k < 1 or top_k > 20):
-            return format_error("top_k must be between 1 and 20")
-        if similarity_threshold is not None and (similarity_threshold < 0 or similarity_threshold > 1):
-            return format_error("similarity_threshold must be between 0.0 and 1.0")
+        # Convert and validate max_documents_length
+        max_docs_int = 10000  # default
+        if max_documents_length is not None:
+            try:
+                max_docs_int = int(max_documents_length)
+                if max_docs_int < 1000 or max_docs_int > 50000:
+                    return format_error("max_documents_length must be between 1000 and 50000")
+            except (ValueError, TypeError):
+                return format_error("max_documents_length must be a valid integer")
         
+        # Build RAG configuration according to ElevenLabs API
         rag_config = {
-            "chunk_size": chunk_size,
-            "chunk_overlap": chunk_overlap,
-            "top_k": top_k,
-            "similarity_threshold": similarity_threshold
+            "enabled": enabled if enabled is not None else True,
+            "embedding_model": embedding_model or "e5_mistral_7b_instruct",
+            "max_documents_length": max_docs_int
         }
         
         # Note: This would call the actual RAG configuration endpoint

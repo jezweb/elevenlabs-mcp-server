@@ -252,14 +252,33 @@ async def create_test(
         )
     
     try:
+        # Build payload according to ElevenLabs API docs
         data = {
             "name": name,
-            "agent_id": agent_id,
-            "type": test_type,
-            "scenarios": scenarios or [],
-            "expectations": expectations or {},
-            "metadata": metadata or {}
+            "chat_history": scenarios or [
+                {
+                    "role": "user",  
+                    "time_in_call_secs": 1
+                }
+            ],
+            "success_condition": expectations.get("success_condition", "string") if expectations else "string",
+            "success_examples": expectations.get("success_examples", [
+                {
+                    "response": "string",
+                    "type": "string"
+                }
+            ]) if expectations else [{"response": "string", "type": "string"}],
+            "failure_examples": expectations.get("failure_examples", [
+                {
+                    "response": "string", 
+                    "type": "string"
+                }
+            ]) if expectations else [{"response": "string", "type": "string"}]
         }
+        
+        # Add optional parameters if provided
+        if metadata:
+            data.update(metadata)
         
         result = await client._request(
             "POST",
