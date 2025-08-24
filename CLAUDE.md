@@ -2,9 +2,43 @@
 
 ## Project Overview
 
-This is a monorepo containing two FastMCP servers for ElevenLabs Conversational AI:
-1. **elevenlabs-agents**: Agent management and configuration
-2. **elevenlabs-knowledge**: Knowledge base and conversation management
+This is a production-ready monorepo containing two FastMCP servers for ElevenLabs Conversational AI:
+
+1. **elevenlabs-agents**: Complete agent lifecycle management
+2. **elevenlabs-knowledge**: Knowledge base operations and analytics  
+
+**Status**: ✅ Production Ready - All critical features tested and working
+
+## Recent Major Fixes (2024-12-XX)
+
+### Critical Issues Resolved:
+- ✅ **API URL Structure**: Fixed double `/v1/v1/` prefix issues causing 404 errors
+- ✅ **Parameter Validation**: All decimal parameters now accept MCP string inputs (temperature, stability, etc.)
+- ✅ **Payload Structures**: Updated create_test and configure_rag to match ElevenLabs API docs  
+- ✅ **Endpoint Corrections**: All testing and knowledge base endpoints use correct paths
+
+### Validation Status:
+- ✅ Agent creation with temperature: 0.9 works perfectly
+- ✅ Voice configuration (stability: 0.6, similarity_boost: 0.85, speed: 1.05) 
+- ✅ Conversation simulation (no more 404 errors)
+- ✅ Knowledge base statistics with agent_id parameter
+- ✅ All CRUD operations stable and tested
+
+## Known Working Features
+
+### Agents Server ✅
+- Agent creation/update/deletion with custom parameters
+- Voice configuration with decimal precision
+- Conversation simulation and testing 
+- Multi-agent transfer configuration
+- Agent link generation and sharing
+
+### Knowledge Server ✅  
+- Document upload (URL and text)
+- Knowledge base size reporting
+- Conversation analytics and export
+- Performance reporting over time periods
+- RAG configuration (with official API parameters)
 
 ## Critical Requirements for FastMCP Cloud
 

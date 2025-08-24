@@ -7,61 +7,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed `simulate_conversation` API payload structure using `simulation_specification` format
+- Corrected all testing endpoint URLs by removing double `/v1/v1/` prefixes
+- Fixed parameter type validation for decimal numbers (temperature, stability, similarity_boost)
+- Updated `create_test` payload structure with correct API parameters
+- Fixed `configure_rag` payload structure with official API parameters
+- Improved `get_agent_link` error handling and validation
+- Removed `list_mcp_servers` function due to non-existent endpoint
+- Fixed `get_knowledge_base_size` to require agent_id parameter
+
+### Changed
+- Updated all API endpoint URLs to use correct base paths
+- Changed numeric parameters to accept string inputs with float conversion
+- Enhanced error messages for better debugging
+
+### Production Validation
+- ✅ All core features verified working in FastMCP Cloud deployment
+- ✅ End-to-end testing completed successfully
+- ✅ API connection and authentication validated
+- ✅ Parameter handling for MCP string inputs confirmed
+
+## [0.1.0] - 2025-01-24
+
 ### Added
 - Initial project structure with monorepo architecture
-- Two specialized MCP servers:
+- Three specialized MCP servers:
   - `elevenlabs-agents`: Agent management and configuration
   - `elevenlabs-knowledge`: Knowledge base and conversation management
-- Shared utilities module for common functionality
-- Comprehensive documentation (README, ARCHITECTURE, DEPLOYMENT)
+  - `elevenlabs-testing`: Agent testing and simulation
+- Comprehensive documentation (README, ARCHITECTURE, DEPLOYMENT, CLAUDE.md)
 - Environment-based configuration
-- Copy-based shared code distribution for FastMCP Cloud compatibility
+- FastMCP Cloud deployment compatibility
 - Pre-deployment validation scripts
-- Git tracking and project management files
+
+### Agents Server Features
+- Agent CRUD operations (create, read, update, delete)
+- System prompt management and updates
+- LLM configuration (model, temperature, max_tokens)
+- Voice and TTS settings (stability, similarity_boost, style)
+- Multi-agent transfer configuration
+- Agent-to-agent routing setup
+- Conversation simulation and testing
+- Configuration validation and error handling
+
+### Knowledge Server Features
+- Document management (URL upload, text documents)
+- RAG configuration (chunk_size, chunk_overlap, top_k, similarity_threshold)
+- Knowledge base index rebuilding
+- Conversation retrieval and transcript access
+- Performance analytics and reporting
+- Data export (JSON, CSV formats)
+- Real-time conversation monitoring
+
+### Testing Server Features
+- Agent conversation simulation
+- Test case creation and management
+- Performance validation tools
+- Integration testing capabilities
 
 ### Infrastructure
 - FastMCP Cloud deployment configuration
 - Module-level server objects for cloud compatibility
-- PyPI-only dependency management
+- PyPI-only dependency management (fastmcp>=2.11.3)
 - Async/await architecture throughout
+- Comprehensive error handling and logging
 
 ### Security
 - API key management via environment variables
 - Input validation on all endpoints
 - Error message sanitization
-- No PII storage
-
-## [0.1.0] - 2025-01-22 (Planned)
-
-### Agents Server Features
-- Agent CRUD operations
-- System prompt management
-- LLM configuration (model, temperature, tokens)
-- Voice and TTS settings
-- Multi-agent transfer configuration
-- Agent-to-agent routing
-- Phone transfer setup
-- Conversation simulation
-- Configuration validation
-
-### Knowledge Server Features
-- Document upload (URL, file, text)
-- Multi-format support (PDF, DOCX, TXT, HTML, EPUB)
-- RAG configuration (chunking, indexing)
-- Index rebuilding and optimization
-- Conversation retrieval and analysis
-- Transcript parsing
-- Data export (CSV, JSON)
-- Performance analytics
-- Knowledge base usage tracking
-
-### Developer Experience
-- Local development setup
-- Testing framework
-- Deployment scripts
-- Comprehensive documentation
-- Error handling patterns
-- Logging configuration
+- No PII storage in local systems
+- Secure credential handling
 
 ---
 

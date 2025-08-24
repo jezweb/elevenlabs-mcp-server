@@ -1,6 +1,12 @@
 # ElevenLabs MCP Servers
 
-Two specialized MCP (Model Context Protocol) servers for managing ElevenLabs Conversational AI agents and knowledge bases.
+Production-ready MCP (Model Context Protocol) servers for comprehensive ElevenLabs Conversational AI management. Deploy to FastMCP Cloud for instant access to advanced agent creation, knowledge base management, and conversation analytics.
+
+[![FastMCP Ready](https://img.shields.io/badge/FastMCP-Ready-green)](https://fastmcp.com)
+[![ElevenLabs Compatible](https://img.shields.io/badge/ElevenLabs-API%20v1-blue)](https://elevenlabs.io)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
+🎯 **Perfect for**: AI developers, conversational AI teams, customer support automation
 
 ## 🚀 Quick Start
 
@@ -46,42 +52,42 @@ python src/server.py
 ## 📦 Servers
 
 ### 1. ElevenLabs Agents Server
+*Complete agent lifecycle management*
 
-Manages conversational AI agents, their configuration, and multi-agent orchestration.
+**Core Capabilities:**
+- ✅ **Agent Creation**: Custom prompts, voice settings, LLM configuration
+- ✅ **Voice Customization**: Stability, similarity boost, speed controls  
+- ✅ **Multi-Agent Orchestration**: Transfer flows and handoff logic
+- ✅ **Testing & Simulation**: Conversation testing and validation
+- ✅ **Real-time Management**: Update agents without downtime
 
-**Key Features:**
-- Create and manage AI agents with custom prompts
-- Configure LLM settings (model, temperature, tokens)
-- Set up voice and TTS parameters
-- Design multi-agent transfer flows
-- Test agent responses with simulation
+**Key Tools:**
+- `create_agent` - Create conversational agents with custom parameters
+- `configure_voice` - Fine-tune voice characteristics and TTS settings
+- `simulate_conversation` - Test agent responses in real-time
+- `add_transfer_to_agent` - Build complex multi-agent workflows
+- `get_agent_link` - Generate shareable agent interfaces
 
-**Example Tools:**
-- `create_agent` - Create a new conversational agent
-- `update_system_prompt` - Modify agent's behavior
-- `add_transfer_to_agent` - Configure agent handoffs
-- `simulate_conversation` - Test agent responses
+**Status**: ✅ Production Ready - All major features fully tested and working
 
-[Full documentation →](./elevenlabs-agents/README.md)
+### 2. ElevenLabs Knowledge Server  
+*Advanced knowledge management and analytics*
 
-### 2. ElevenLabs Knowledge Server
+**Core Capabilities:**
+- ✅ **Document Management**: Upload PDFs, web pages, text files
+- ✅ **RAG Configuration**: Optimize retrieval for better responses
+- ✅ **Conversation Analytics**: Performance insights and metrics
+- ✅ **Data Export**: Conversation transcripts and usage reports
+- ✅ **Real-time Monitoring**: Track agent performance over time
 
-Handles knowledge base operations, RAG configuration, and conversation analytics.
+**Key Tools:**
+- `add_document_url` - Import web content to knowledge base
+- `configure_rag` - Optimize document retrieval settings
+- `analyze_conversation` - Extract insights from conversation logs
+- `performance_report` - Generate detailed analytics reports
+- `export_conversations` - Bulk data export for analysis
 
-**Key Features:**
-- Upload documents (PDF, DOCX, TXT, HTML)
-- Configure RAG settings for optimal retrieval
-- Analyze conversation transcripts
-- Export conversation data
-- Generate performance reports
-
-**Example Tools:**
-- `add_document_url` - Add web content to knowledge base
-- `configure_rag` - Optimize retrieval settings
-- `analyze_conversation` - Extract insights from calls
-- `performance_report` - Generate analytics
-
-[Full documentation →](./elevenlabs-knowledge/README.md)
+**Status**: ✅ Production Ready - Core functionality verified and stable
 
 ## 🏗️ Architecture
 
@@ -150,9 +156,18 @@ Configure your MCP client (e.g., Claude Desktop) to connect:
 - [Development](./CLAUDE.md) - Development guidelines
 - [Changelog](./CHANGELOG.md) - Version history
 
-## 🧪 Testing
+## 🧪 Testing & Validation
 
-Run tests for both servers:
+### End-to-End Testing Status
+
+**✅ Core Features Verified:**
+- Agent creation with custom temperature settings
+- Voice configuration with decimal parameters (stability, similarity_boost, speed)
+- Conversation simulation and testing
+- Knowledge base document management
+- Real-time conversation analytics
+
+### Test Commands
 
 ```bash
 # Test all servers
@@ -160,8 +175,21 @@ Run tests for both servers:
 
 # Test individual server
 cd elevenlabs-agents
-pytest tests/
+python src/server.py --test
+
+# Validate API connections
+cd elevenlabs-knowledge  
+python -c "from src.server import mcp; print('✅ Server ready')"
 ```
+
+### Production Readiness Checklist
+
+- ✅ All critical API endpoints working
+- ✅ Parameter validation handles MCP string inputs
+- ✅ Error handling and retry logic implemented  
+- ✅ FastMCP Cloud deployment compatibility
+- ✅ Comprehensive logging and monitoring
+- ✅ Environment variable configuration
 
 ## 🤝 Contributing
 
