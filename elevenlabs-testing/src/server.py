@@ -10,6 +10,7 @@ import os
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Literal
 
 from fastmcp import FastMCP
@@ -54,6 +55,31 @@ if not Config.API_KEY:
 
 # Initialize ElevenLabs client at module level
 client = ElevenLabsClient(Config.API_KEY)
+
+# Load resources
+def load_resource(filename: str) -> Dict[str, Any]:
+    """Load a JSON resource file with proper error handling."""
+    resource_path = Path(__file__).parent / "resources" / filename
+    try:
+        if not resource_path.exists():
+            logger.error(f"Resource file not found: {resource_path}")
+            return {}
+        
+        with open(resource_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            logger.info(f"Successfully loaded {filename}: {len(data)} items")
+            return data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error in {filename}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error loading resource {filename}: {e}")
+        return {}
+
+# Load templates at module level for efficiency
+TEST_TEMPLATES = load_resource("test_templates.json")
+SCENARIO_TEMPLATES = load_resource("scenario_templates.json") 
+VALIDATION_TEMPLATES = load_resource("validation_templates.json")
 
 # Initialize FastMCP server
 mcp = FastMCP(
@@ -408,6 +434,54 @@ async def stream_simulate_conversation_tool(
 
 
 # Resources
+
+@mcp.resource(
+    "resource://test-templates",
+    name="ElevenLabs Testing Templates",
+    description="Comprehensive templates for testing conversational AI agents including conversation tests, tool tests, integration tests, performance tests, and regression tests. Provides detailed test scenarios, success criteria, and validation frameworks for ensuring agent quality and reliability.",
+    mime_type="application/json",
+    tags={"testing", "templates", "validation", "quality_assurance", "conversation_tests"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_test_templates_resource() -> str:
+    """Get agent testing templates as a JSON resource."""
+    return json.dumps(TEST_TEMPLATES, indent=2)
+
+
+@mcp.resource(
+    "resource://scenario-templates", 
+    name="ElevenLabs Test Scenarios",
+    description="Pre-configured test scenarios for different conversation types including customer support, technical support, sales interactions, edge cases, and conversation flow patterns. Each scenario includes expected behaviors, success metrics, and validation criteria for comprehensive agent testing.",
+    mime_type="application/json",
+    tags={"scenarios", "test_cases", "customer_support", "technical_support", "conversation_flows"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_scenario_templates_resource() -> str:
+    """Get test scenario templates as a JSON resource."""
+    return json.dumps(SCENARIO_TEMPLATES, indent=2)
+
+
+@mcp.resource(
+    "resource://validation-templates",
+    name="ElevenLabs Validation Framework",
+    description="Quality validation frameworks for evaluating agent performance including response quality validation, conversation flow analysis, technical performance metrics, business outcome measurement, and compliance validation. Provides scoring rubrics, criteria definitions, and evaluation methodologies.",
+    mime_type="application/json",
+    tags={"validation", "quality_metrics", "performance", "compliance", "evaluation"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_validation_templates_resource() -> str:
+    """Get validation framework templates as a JSON resource."""
+    return json.dumps(VALIDATION_TEMPLATES, indent=2)
+
 
 @mcp.resource("resource://documentation")
 async def get_documentation() -> str:

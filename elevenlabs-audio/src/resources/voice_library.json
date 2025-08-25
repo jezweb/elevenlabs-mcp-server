@@ -1,0 +1,273 @@
+{
+  "popular_voices": {
+    "name": "Popular ElevenLabs Voices",
+    "description": "Curated collection of high-quality voices with usage recommendations",
+    "voices": {
+      "Rachel": {
+        "voice_id": "21m00Tcm4TlvDq8ikWAM",
+        "gender": "Female",
+        "accent": "American",
+        "age": "Young Adult",
+        "tone": "Calm, Professional",
+        "best_for": [
+          "Corporate presentations",
+          "Educational content",
+          "Audiobook narration",
+          "Professional voiceovers"
+        ],
+        "characteristics": [
+          "Clear articulation",
+          "Neutral accent",
+          "Consistent quality",
+          "Versatile for various content"
+        ]
+      },
+      "Adam": {
+        "voice_id": "pNInz6obpgDQGcFmaJgB", 
+        "gender": "Male",
+        "accent": "American",
+        "age": "Middle-aged",
+        "tone": "Authoritative, Warm",
+        "best_for": [
+          "News reading",
+          "Documentary narration",
+          "Business presentations",
+          "Instructional content"
+        ],
+        "characteristics": [
+          "Deep, resonant voice",
+          "Professional delivery",
+          "Trustworthy tone",
+          "Good for longer content"
+        ]
+      },
+      "Sam": {
+        "voice_id": "yoZ06aMxZJJ28mfd3POQ",
+        "gender": "Male", 
+        "accent": "American",
+        "age": "Young Adult",
+        "tone": "Casual, Friendly",
+        "best_for": [
+          "Casual conversations",
+          "Social media content",
+          "Interactive applications",
+          "Informal presentations"
+        ],
+        "characteristics": [
+          "Conversational style",
+          "Natural inflection",
+          "Approachable tone",
+          "Good for dialogue"
+        ]
+      },
+      "Bella": {
+        "voice_id": "EXAVITQu4vr4xnSDxMaL",
+        "gender": "Female",
+        "accent": "American",
+        "age": "Young Adult",
+        "tone": "Expressive, Dynamic",
+        "best_for": [
+          "Character voices",
+          "Storytelling",
+          "Creative content",
+          "Entertainment"
+        ],
+        "characteristics": [
+          "Highly expressive",
+          "Wide emotional range",
+          "Engaging delivery",
+          "Great for character work"
+        ]
+      },
+      "Antoni": {
+        "voice_id": "ErXwobaYiN019PkySvjV",
+        "gender": "Male",
+        "accent": "American",
+        "age": "Young Adult", 
+        "tone": "Energetic, Upbeat",
+        "best_for": [
+          "Marketing content",
+          "Advertisements",
+          "Motivational content",
+          "Energetic presentations"
+        ],
+        "characteristics": [
+          "High energy",
+          "Enthusiastic delivery",
+          "Attention-grabbing",
+          "Good for promotional content"
+        ]
+      }
+    }
+  },
+  "voice_selection_guide": {
+    "name": "Voice Selection Guidelines",
+    "description": "Comprehensive guide for choosing the right voice for your content",
+    "selection_criteria": {
+      "content_type": {
+        "educational": {
+          "recommended_voices": ["Rachel", "Adam"],
+          "characteristics": "Clear, authoritative, professional",
+          "avoid": "Overly casual or expressive voices"
+        },
+        "entertainment": {
+          "recommended_voices": ["Bella", "Antoni", "Sam"],
+          "characteristics": "Expressive, engaging, dynamic",
+          "avoid": "Too formal or monotonous"
+        },
+        "corporate": {
+          "recommended_voices": ["Rachel", "Adam"],
+          "characteristics": "Professional, trustworthy, clear",
+          "avoid": "Casual or overly friendly tones"
+        },
+        "conversational": {
+          "recommended_voices": ["Sam", "Bella"],
+          "characteristics": "Natural, approachable, friendly",
+          "avoid": "Overly formal or robotic"
+        }
+      },
+      "audience": {
+        "professional": {
+          "voice_characteristics": "Authoritative, clear, professional",
+          "recommended_settings": {
+            "stability": "0.6-0.8",
+            "similarity_boost": "0.7-0.9",
+            "style": "0.0-0.2"
+          }
+        },
+        "general_public": {
+          "voice_characteristics": "Friendly, approachable, clear",
+          "recommended_settings": {
+            "stability": "0.4-0.6",
+            "similarity_boost": "0.6-0.8", 
+            "style": "0.1-0.3"
+          }
+        },
+        "children": {
+          "voice_characteristics": "Warm, engaging, expressive",
+          "recommended_settings": {
+            "stability": "0.3-0.5",
+            "similarity_boost": "0.5-0.7",
+            "style": "0.2-0.4"
+          }
+        }
+      }
+    }
+  },
+  "model_recommendations": {
+    "name": "Model Selection Guide",
+    "description": "Choose the best model for your specific use case",
+    "models": {
+      "eleven_multilingual_v2": {
+        "description": "Highest quality multilingual model",
+        "languages": 29,
+        "quality": "Premium",
+        "speed": "Medium",
+        "best_for": [
+          "High-quality content production",
+          "Multilingual content",
+          "Professional applications",
+          "Final production output"
+        ],
+        "cost": "Higher",
+        "latency": "3-5 seconds"
+      },
+      "eleven_turbo_v2": {
+        "description": "Fast, high-quality English model",
+        "languages": "English primary",
+        "quality": "High",
+        "speed": "Fast",
+        "best_for": [
+          "Quick content generation",
+          "Interactive applications",
+          "Real-time use cases",
+          "Development and testing"
+        ],
+        "cost": "Medium",
+        "latency": "1-3 seconds"
+      },
+      "eleven_flash_v2": {
+        "description": "Ultra-fast model for real-time applications",
+        "languages": "English",
+        "quality": "Good",
+        "speed": "Very Fast",
+        "best_for": [
+          "Real-time conversational AI",
+          "Live applications",
+          "High-volume generation",
+          "Rapid prototyping"
+        ],
+        "cost": "Lower",
+        "latency": "<1 second"
+      },
+      "eleven_english_sts_v2": {
+        "description": "Specialized model for speech-to-speech conversion",
+        "languages": "English",
+        "quality": "High (for voice conversion)",
+        "speed": "Medium", 
+        "best_for": [
+          "Voice transformation",
+          "Speech-to-speech conversion",
+          "Voice cloning applications",
+          "Audio post-production"
+        ],
+        "cost": "Medium",
+        "use_case": "Voice transformation only"
+      }
+    }
+  },
+  "audio_format_guide": {
+    "name": "Audio Format Selection",
+    "description": "Choose optimal audio formats for different applications",
+    "formats": {
+      "mp3_44100_128": {
+        "description": "Standard quality MP3",
+        "quality": "Good",
+        "file_size": "Medium",
+        "compatibility": "Universal",
+        "best_for": [
+          "General content distribution",
+          "Web applications", 
+          "Mobile apps",
+          "Streaming"
+        ]
+      },
+      "mp3_44100_192": {
+        "description": "High quality MP3 (requires Creator tier+)",
+        "quality": "High",
+        "file_size": "Larger",
+        "compatibility": "Universal",
+        "best_for": [
+          "Professional content",
+          "Music applications",
+          "High-quality podcasts",
+          "Archival purposes"
+        ]
+      },
+      "pcm_44100": {
+        "description": "Uncompressed PCM (requires Pro tier+)",
+        "quality": "Highest", 
+        "file_size": "Large",
+        "compatibility": "Professional tools",
+        "best_for": [
+          "Professional audio production",
+          "Further processing/editing",
+          "Maximum quality requirements",
+          "Audio analysis"
+        ]
+      },
+      "ulaw_8000": {
+        "description": "Telephony format (μ-law)",
+        "quality": "Phone quality",
+        "file_size": "Small",
+        "compatibility": "Telecom systems",
+        "best_for": [
+          "Twilio integrations",
+          "Phone systems",
+          "IVR applications",
+          "Telecom applications"
+        ]
+      }
+    }
+  }
+}

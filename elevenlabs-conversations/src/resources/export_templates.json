@@ -1,0 +1,164 @@
+{
+  "csv_export": {
+    "name": "CSV Export Template",
+    "description": "Structured CSV format for conversation data export and analysis",
+    "standard_fields": {
+      "conversation_id": "Unique conversation identifier",
+      "agent_id": "Agent that handled conversation",
+      "start_time": "Conversation start timestamp",
+      "end_time": "Conversation end timestamp", 
+      "duration_seconds": "Total conversation duration",
+      "turn_count": "Number of exchanges",
+      "user_satisfaction": "Satisfaction rating if available",
+      "resolution_status": "Whether issue was resolved",
+      "category": "Conversation category/topic"
+    },
+    "optional_fields": {
+      "user_id": "User identifier if available",
+      "channel": "Communication channel used",
+      "language": "Conversation language",
+      "location": "User location if available",
+      "device_type": "User device type",
+      "referral_source": "How user found service"
+    },
+    "use_cases": [
+      "Spreadsheet analysis",
+      "Business intelligence tools",
+      "Historical trending",
+      "Performance dashboards"
+    ]
+  },
+  "json_export": {
+    "name": "JSON Export Template",
+    "description": "Complete JSON format preserving all conversation metadata and structure",
+    "structure": {
+      "metadata": {
+        "conversation_id": "string",
+        "agent_id": "string", 
+        "created_at": "ISO datetime",
+        "updated_at": "ISO datetime",
+        "status": "string",
+        "duration": "number (seconds)",
+        "turn_count": "number"
+      },
+      "participants": {
+        "agent": {
+          "id": "string",
+          "name": "string",
+          "version": "string"
+        },
+        "user": {
+          "id": "string (optional)",
+          "session_id": "string"
+        }
+      },
+      "conversation_data": {
+        "transcript": "array of message objects",
+        "audio_urls": "array of audio file URLs", 
+        "feedback": "feedback objects if available",
+        "tags": "array of conversation tags",
+        "custom_fields": "object with additional data"
+      },
+      "analytics": {
+        "response_times": "array of agent response times",
+        "sentiment_scores": "sentiment analysis if available",
+        "topic_detection": "detected topics/intents",
+        "quality_metrics": "conversation quality scores"
+      }
+    },
+    "use_cases": [
+      "System integration",
+      "Data migration", 
+      "Advanced analytics",
+      "Machine learning training"
+    ]
+  },
+  "filtered_exports": {
+    "name": "Filtered Export Templates",
+    "description": "Pre-configured export filters for common analysis needs",
+    "filters": {
+      "by_date_range": {
+        "description": "Export conversations from specific time period",
+        "parameters": {
+          "start_date": "YYYY-MM-DD format",
+          "end_date": "YYYY-MM-DD format",
+          "timezone": "UTC or specific timezone"
+        }
+      },
+      "by_agent": {
+        "description": "Export conversations for specific agent",
+        "parameters": {
+          "agent_id": "specific agent identifier",
+          "include_performance_metrics": "boolean"
+        }
+      },
+      "by_satisfaction": {
+        "description": "Export by satisfaction rating range",
+        "parameters": {
+          "min_rating": "minimum satisfaction score",
+          "max_rating": "maximum satisfaction score",
+          "include_unrated": "boolean"
+        }
+      },
+      "by_duration": {
+        "description": "Export conversations by length",
+        "parameters": {
+          "min_duration": "minimum seconds",
+          "max_duration": "maximum seconds",
+          "include_abandoned": "boolean"
+        }
+      },
+      "by_resolution": {
+        "description": "Export by resolution status",
+        "parameters": {
+          "resolved_only": "boolean",
+          "unresolved_only": "boolean",
+          "escalated_only": "boolean"
+        }
+      }
+    }
+  },
+  "batch_export": {
+    "name": "Batch Export Template",
+    "description": "Templates for exporting large volumes of conversation data efficiently",
+    "strategies": {
+      "chunked_export": {
+        "description": "Export data in manageable chunks",
+        "chunk_size": "1000 conversations per file",
+        "naming_convention": "conversations_YYYY-MM-DD_chunk_N.format",
+        "benefits": ["manageable file sizes", "resumable exports", "parallel processing"]
+      },
+      "compressed_export": {
+        "description": "Export with compression for large datasets",
+        "compression": "gzip or zip",
+        "estimated_size_reduction": "70-80%",
+        "benefits": ["reduced download time", "storage efficiency", "bandwidth savings"]
+      },
+      "streaming_export": {
+        "description": "Real-time export for continuous data feeds",
+        "format": "JSONL (JSON Lines)",
+        "use_cases": ["real-time analytics", "continuous monitoring", "live dashboards"]
+      }
+    }
+  },
+  "compliance_exports": {
+    "name": "Compliance and Audit Export Templates",
+    "description": "Export formats designed for regulatory compliance and auditing",
+    "compliance_types": {
+      "gdpr_export": {
+        "description": "GDPR-compliant export with privacy considerations",
+        "includes": ["user consent status", "data retention periods", "anonymization options"],
+        "excludes": ["PII unless specifically requested", "internal agent notes"]
+      },
+      "audit_trail": {
+        "description": "Complete audit trail for regulatory review",
+        "includes": ["all system interactions", "timestamps", "user actions", "system responses"],
+        "format": "immutable log format with checksums"
+      },
+      "retention_report": {
+        "description": "Data retention compliance reporting",
+        "includes": ["data age", "retention policies", "deletion schedules", "compliance status"]
+      }
+    }
+  }
+}

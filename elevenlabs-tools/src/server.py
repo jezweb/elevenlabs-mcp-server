@@ -10,6 +10,7 @@ import os
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Literal
 
 from fastmcp import FastMCP
@@ -62,6 +63,31 @@ if not Config.API_KEY:
 
 # Initialize ElevenLabs client at module level
 client = ElevenLabsClient(Config.API_KEY)
+
+# Load resources
+def load_resource(filename: str) -> Dict[str, Any]:
+    """Load a JSON resource file with proper error handling."""
+    resource_path = Path(__file__).parent / "resources" / filename
+    try:
+        if not resource_path.exists():
+            logger.error(f"Resource file not found: {resource_path}")
+            return {}
+        
+        with open(resource_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            logger.info(f"Successfully loaded {filename}: {len(data)} items")
+            return data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error in {filename}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error loading resource {filename}: {e}")
+        return {}
+
+# Load templates at module level for efficiency
+INTEGRATION_PATTERNS = load_resource("integration_patterns.json")
+TOOL_CONFIGURATIONS = load_resource("tool_configurations.json") 
+SECURITY_GUIDELINES = load_resource("security_guidelines.json")
 
 # Initialize FastMCP server
 mcp = FastMCP(
@@ -455,6 +481,54 @@ async def delete_secret_tool(
 
 
 # Resources
+
+@mcp.resource(
+    "resource://integration-patterns",
+    name="ElevenLabs Integration Patterns",
+    description="Comprehensive patterns and templates for integrating MCP servers with ElevenLabs agents. Includes configuration templates for API integrations, workflow automation, database connections, real-time data streams, custom tool creation, approval policies, and secrets management best practices.",
+    mime_type="application/json",
+    tags={"integration", "mcp_servers", "tools", "patterns", "configuration", "approvals"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_integration_patterns_resource() -> str:
+    """Get MCP server integration patterns as a JSON resource."""
+    return json.dumps(INTEGRATION_PATTERNS, indent=2)
+
+
+@mcp.resource(
+    "resource://tool-configurations",
+    name="ElevenLabs Tool Configurations",
+    description="Ready-to-use configuration templates for popular integrations including OpenAI, Stripe, Slack, HubSpot, databases, webhooks, and workflow automation platforms. Provides complete configuration examples, security requirements, validation rules, and troubleshooting guides for seamless tool integration.",
+    mime_type="application/json",
+    tags={"tool_configs", "api_integrations", "databases", "webhooks", "workflows", "troubleshooting"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_tool_configurations_resource() -> str:
+    """Get tool configuration templates as a JSON resource."""
+    return json.dumps(TOOL_CONFIGURATIONS, indent=2)
+
+
+@mcp.resource(
+    "resource://security-guidelines",
+    name="ElevenLabs Security Guidelines",
+    description="Comprehensive security framework for MCP server integrations and tool management. Covers authentication security, authorization controls, data protection, network security, compliance requirements, incident response procedures, and security monitoring best practices for enterprise-grade deployments.",
+    mime_type="application/json",
+    tags={"security", "compliance", "authentication", "authorization", "data_protection", "incident_response"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_security_guidelines_resource() -> str:
+    """Get security guidelines and framework as a JSON resource."""
+    return json.dumps(SECURITY_GUIDELINES, indent=2)
+
 
 @mcp.resource("resource://documentation")
 async def get_documentation() -> str:

@@ -1,6 +1,7 @@
 """ElevenLabs Audio MCP Server - Audio generation and processing."""
 
 import asyncio
+import json
 import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -36,6 +37,31 @@ from tools import (
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Load resources
+def load_resource(filename: str) -> Dict[str, Any]:
+    """Load a JSON resource file with proper error handling."""
+    resource_path = Path(__file__).parent / "resources" / filename
+    try:
+        if not resource_path.exists():
+            logger.error(f"Resource file not found: {resource_path}")
+            return {}
+        
+        with open(resource_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            logger.info(f"Successfully loaded {filename}: {len(data)} items")
+            return data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error in {filename}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error loading resource {filename}: {e}")
+        return {}
+
+# Load templates at module level for efficiency
+AUDIO_WORKFLOWS = load_resource("audio_workflows.json")
+VOICE_LIBRARY = load_resource("voice_library.json") 
+AUDIO_BEST_PRACTICES = load_resource("audio_best_practices.json")
 
 # Initialize FastMCP server
 mcp = FastMCP(
@@ -325,6 +351,55 @@ async def voice_batch_transform(
         model_id=model_id,
         save_directory=save_directory
     )
+
+# Resources
+
+@mcp.resource(
+    "resource://audio-workflows",
+    name="ElevenLabs Audio Workflows",
+    description="Comprehensive audio processing workflows including text-to-speech generation, speech-to-text transcription, sound effects creation, and voice transformation. Provides step-by-step guides, best practices, and parameter recommendations for optimal audio quality and production efficiency.",
+    mime_type="application/json",
+    tags={"workflows", "audio_processing", "tts", "stt", "sound_effects", "voice_transformation"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_audio_workflows_resource() -> str:
+    """Get audio processing workflows as a JSON resource."""
+    return json.dumps(AUDIO_WORKFLOWS, indent=2)
+
+
+@mcp.resource(
+    "resource://voice-library",
+    name="ElevenLabs Voice Library",
+    description="Curated collection of high-quality ElevenLabs voices with detailed characteristics, usage recommendations, and selection guidelines. Includes voice IDs, personality descriptions, best use cases, and model recommendations for different content types and audiences.",
+    mime_type="application/json",
+    tags={"voices", "voice_selection", "audio_models", "voice_characteristics", "recommendations"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_voice_library_resource() -> str:
+    """Get voice library and selection guide as a JSON resource."""
+    return json.dumps(VOICE_LIBRARY, indent=2)
+
+
+@mcp.resource(
+    "resource://audio-best-practices",
+    name="ElevenLabs Audio Best Practices",
+    description="Professional guidelines and best practices for audio production using ElevenLabs tools. Covers text preparation, voice parameter optimization, quality assurance, recording techniques, and production workflows for achieving optimal results across all audio generation and processing tasks.",
+    mime_type="application/json",
+    tags={"best_practices", "audio_quality", "production_guidelines", "optimization", "quality_assurance"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_audio_best_practices_resource() -> str:
+    """Get audio production best practices as a JSON resource."""
+    return json.dumps(AUDIO_BEST_PRACTICES, indent=2)
 
 # Main entry point
 if __name__ == "__main__":

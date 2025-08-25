@@ -1,0 +1,320 @@
+{
+  "tts_best_practices": {
+    "name": "Text-to-Speech Best Practices",
+    "description": "Guidelines for achieving optimal TTS results and audio quality",
+    "text_preparation": {
+      "formatting": {
+        "principles": [
+          "Use proper punctuation for natural pauses",
+          "Avoid excessive capitalization (affects emphasis)",
+          "Remove special characters that don't contribute to speech",
+          "Use consistent formatting throughout content"
+        ],
+        "ssml_markup": {
+          "description": "Speech Synthesis Markup Language for advanced control",
+          "examples": {
+            "pause": "<break time='1s'/> - Insert pause",
+            "emphasis": "<emphasis level='strong'>important text</emphasis>",
+            "speed": "<prosody rate='slow'>slower speech</prosody>",
+            "pitch": "<prosody pitch='+2st'>higher pitch</prosody>"
+          }
+        },
+        "abbreviations": {
+          "expand_for_clarity": [
+            "Dr. → Doctor",
+            "Mr. → Mister", 
+            "Inc. → Incorporated",
+            "etc. → et cetera"
+          ],
+          "context_dependent": [
+            "US → U.S. or United States (depending on context)",
+            "AI → A.I. or artificial intelligence",
+            "CEO → C.E.O. or chief executive officer"
+          ]
+        }
+      },
+      "content_optimization": {
+        "sentence_length": {
+          "ideal": "15-20 words per sentence for natural flow",
+          "maximum": "25 words to avoid run-on sentences",
+          "considerations": "Longer sentences may sound rushed or unclear"
+        },
+        "paragraph_structure": {
+          "length": "3-5 sentences per paragraph",
+          "transitions": "Use connecting words for smooth flow",
+          "breaks": "Natural pauses between paragraphs"
+        },
+        "vocabulary": {
+          "pronunciation": "Consider phonetic spelling for difficult words",
+          "jargon": "Define or replace technical terms for general audience",
+          "numbers": "Write out numbers under 10, use digits for larger numbers"
+        }
+      }
+    },
+    "voice_parameter_tuning": {
+      "stability": {
+        "range": "0.0 to 1.0",
+        "recommendations": {
+          "0.0-0.3": "Very expressive, high variation (creative content)",
+          "0.3-0.5": "Moderately expressive (storytelling, entertainment)",
+          "0.5-0.7": "Balanced expression (general content)",
+          "0.7-1.0": "Consistent, professional (corporate, educational)"
+        },
+        "use_cases": {
+          "audiobooks": "0.4-0.6 for character variation",
+          "presentations": "0.6-0.8 for consistency",
+          "advertisements": "0.3-0.5 for engagement"
+        }
+      },
+      "similarity_boost": {
+        "range": "0.0 to 1.0", 
+        "recommendations": {
+          "0.0-0.4": "More creative interpretation (risky)",
+          "0.4-0.6": "Balanced similarity (experimental)",
+          "0.6-0.8": "Good similarity (recommended)",
+          "0.8-1.0": "Close to original voice (safe choice)"
+        },
+        "considerations": [
+          "Higher values = more predictable results",
+          "Lower values = more creative but potentially inconsistent",
+          "Start with 0.75 and adjust based on results"
+        ]
+      },
+      "style": {
+        "range": "0.0 to 1.0",
+        "impact": "Amplifies the original speaker's style and emotion",
+        "recommendations": {
+          "0.0": "Neutral delivery (default, recommended)",
+          "0.1-0.3": "Slight style enhancement",
+          "0.4-0.6": "Moderate style amplification",
+          "0.7-1.0": "Strong style exaggeration (use carefully)"
+        },
+        "warnings": [
+          "High values can create unnatural results",
+          "Increases computational cost and latency",
+          "Test thoroughly before using in production"
+        ]
+      }
+    },
+    "quality_optimization": {
+      "speaker_boost": {
+        "recommendation": "Enable for most use cases",
+        "benefits": [
+          "Improved clarity and definition",
+          "Better voice consistency",
+          "Enhanced overall quality"
+        ],
+        "trade_offs": [
+          "Slightly increased processing time",
+          "Minimal additional cost"
+        ]
+      },
+      "model_selection": {
+        "for_quality": "eleven_multilingual_v2",
+        "for_speed": "eleven_turbo_v2 or eleven_flash_v2",
+        "for_voice_conversion": "eleven_english_sts_v2",
+        "considerations": [
+          "Higher quality models = longer processing time",
+          "Multilingual models work better for non-English content",
+          "Test different models for your specific use case"
+        ]
+      }
+    }
+  },
+  "stt_best_practices": {
+    "name": "Speech-to-Text Best Practices",
+    "description": "Guidelines for optimal speech transcription accuracy and results",
+    "audio_preparation": {
+      "quality_requirements": {
+        "sample_rate": "16kHz minimum, 44.1kHz+ preferred",
+        "bit_depth": "16-bit minimum, 24-bit preferred", 
+        "format": "WAV (uncompressed) ideal, high-quality MP3 acceptable",
+        "duration": "Under 25MB file size limit"
+      },
+      "recording_environment": {
+        "noise_reduction": [
+          "Record in quiet environment",
+          "Use directional microphone",
+          "Maintain consistent distance from microphone",
+          "Avoid echo and reverberation"
+        ],
+        "speaker_guidelines": [
+          "Speak clearly and at moderate pace",
+          "Avoid mumbling or rushing",
+          "Minimize background conversations",
+          "Use consistent volume level"
+        ]
+      },
+      "pre_processing": {
+        "noise_reduction": "Apply gentle noise reduction if needed",
+        "normalization": "Normalize audio levels for consistency",
+        "editing": "Remove long silences and non-speech sections",
+        "format_conversion": "Convert to supported format if necessary"
+      }
+    },
+    "transcription_optimization": {
+      "language_settings": {
+        "specification": "Always specify language code when known",
+        "auto_detection": "Use only when language is unknown",
+        "multi_language": "Process separately if multiple languages present"
+      },
+      "diarization_settings": {
+        "when_to_use": [
+          "Multiple speakers present",
+          "Meeting or interview transcription",
+          "Conversation analysis needed"
+        ],
+        "limitations": [
+          "Works best with distinct voices",
+          "May struggle with overlapping speech",
+          "Accuracy depends on audio quality"
+        ],
+        "optimization": [
+          "Ensure speakers have different vocal characteristics",
+          "Minimize speaker overlap",
+          "Good microphone placement for all speakers"
+        ]
+      }
+    },
+    "batch_processing": {
+      "file_organization": {
+        "naming": "Use consistent, descriptive file names",
+        "grouping": "Group files by language or speaker if possible",
+        "metadata": "Keep track of recording context and settings"
+      },
+      "processing_strategy": {
+        "batch_size": "Process 10-20 files at a time for manageable results",
+        "error_handling": "Check for failed transcriptions and retry",
+        "quality_check": "Review sample outputs before processing large batches"
+      }
+    }
+  },
+  "sound_effects_best_practices": {
+    "name": "Sound Effects Generation Best Practices", 
+    "description": "Guidelines for creating high-quality sound effects from text descriptions",
+    "description_writing": {
+      "specificity": {
+        "be_descriptive": [
+          "Include material properties (metal, wood, water)",
+          "Specify size and scale (large, small, distant)",
+          "Mention environment (indoor, outdoor, echo)",
+          "Add context (busy street, quiet forest, empty room)"
+        ],
+        "examples": {
+          "good": "Heavy rain drops hitting a tin roof with occasional thunder",
+          "better": "Gentle ocean waves lapping against sandy shore on calm evening",
+          "poor": "Water sound"
+        }
+      },
+      "duration_planning": {
+        "short_effects": "0.5-2 seconds for impacts, clicks, beeps",
+        "medium_effects": "2-5 seconds for transitions, musical stings",
+        "long_effects": "5-22 seconds for ambient sounds, atmospheres",
+        "looping": "Consider if effect will be looped - avoid abrupt starts/endings"
+      },
+      "context_inclusion": {
+        "emotional_context": "Peaceful, tense, exciting, mysterious",
+        "physical_context": "Distance, size, intensity, movement",
+        "temporal_context": "Dawn, night, rush hour, quiet morning"
+      }
+    },
+    "batch_generation": {
+      "organization": {
+        "naming_convention": "Use descriptive, consistent names",
+        "categorization": "Group by type (ambient, impact, musical, etc.)",
+        "metadata": "Track descriptions and parameters used"
+      },
+      "quality_control": {
+        "preview_generation": "Generate single effects before batch processing",
+        "parameter_testing": "Test different durations for same description",
+        "consistency_check": "Ensure effects work well together if part of collection"
+      }
+    }
+  },
+  "voice_transformation_best_practices": {
+    "name": "Voice Transformation Best Practices",
+    "description": "Guidelines for effective speech-to-speech voice conversion and audio enhancement",
+    "input_requirements": {
+      "audio_quality": {
+        "clarity": "Clear speech with minimal background noise",
+        "consistency": "Consistent volume and distance from microphone",
+        "format": "High-quality audio format (WAV preferred, high-bitrate MP3 acceptable)",
+        "duration": "Works best with segments under 5 minutes"
+      },
+      "speech_characteristics": {
+        "pace": "Natural speaking pace (not too fast or slow)",
+        "articulation": "Clear pronunciation and enunciation",
+        "consistency": "Consistent energy and emotion levels",
+        "content": "Natural speech patterns (avoid monotone reading)"
+      }
+    },
+    "parameter_optimization": {
+      "model_selection": {
+        "primary": "eleven_english_sts_v2 - optimized for voice conversion",
+        "alternatives": "Other models may work but not optimized for this task"
+      },
+      "voice_parameters": {
+        "stability": "0.5-0.7 recommended for voice conversion",
+        "similarity_boost": "0.7-0.9 for close match to target voice", 
+        "considerations": "Higher similarity_boost = closer match but may reduce naturalness"
+      }
+    },
+    "audio_isolation": {
+      "use_cases": [
+        "Removing background noise from recordings",
+        "Isolating speech from mixed audio content",
+        "Preparing audio for voice conversion",
+        "Cleaning up interview or podcast recordings"
+      ],
+      "expectations": {
+        "noise_reduction": "Significant reduction in consistent background noise",
+        "speech_preservation": "Speech clarity and intelligibility maintained",
+        "limitations": "Works best with consistent background noise patterns"
+      },
+      "post_processing": {
+        "quality_check": "Review isolated audio before further processing",
+        "normalization": "May need volume normalization after isolation",
+        "editing": "Remove any artifacts or distortions if present"
+      }
+    }
+  },
+  "production_workflows": {
+    "name": "Production Workflow Best Practices",
+    "description": "End-to-end workflows for professional audio production",
+    "content_pipeline": {
+      "pre_production": [
+        "Script review and optimization",
+        "Voice and model selection",
+        "Parameter testing with sample content",
+        "Quality benchmarks establishment"
+      ],
+      "production": [
+        "Generate audio with optimized settings",
+        "Quality control and review",
+        "Adjustments and re-generation if needed",
+        "Batch processing for multiple files"
+      ],
+      "post_production": [
+        "Audio editing and enhancement",
+        "Normalization and mastering",
+        "Format conversion for distribution",
+        "Final quality assurance"
+      ]
+    },
+    "quality_assurance": {
+      "testing_checklist": [
+        "Audio clarity and intelligibility",
+        "Consistent quality across content",
+        "Appropriate voice and tone",
+        "Proper pacing and rhythm",
+        "No artifacts or distortions"
+      ],
+      "review_process": [
+        "Technical review (audio quality)",
+        "Content review (accuracy and clarity)",
+        "User testing (target audience feedback)",
+        "Final approval and sign-off"
+      ]
+    }
+  }
+}

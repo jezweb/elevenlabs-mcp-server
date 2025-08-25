@@ -1,0 +1,227 @@
+{
+  "conversation_tests": {
+    "name": "Conversation Test Templates",
+    "description": "Templates for testing conversation flows and agent responses",
+    "templates": {
+      "greeting_test": {
+        "name": "Greeting Response Test",
+        "description": "Test how agent responds to various greeting styles",
+        "scenarios": [
+          {
+            "user_input": "Hello",
+            "expected_behavior": "Friendly greeting response",
+            "success_criteria": ["greeting acknowledged", "helpful tone", "offers assistance"]
+          },
+          {
+            "user_input": "Hi there",
+            "expected_behavior": "Warm greeting with engagement",
+            "success_criteria": ["matches user's casual tone", "invites further conversation"]
+          },
+          {
+            "user_input": "Good morning",
+            "expected_behavior": "Time-appropriate greeting",
+            "success_criteria": ["acknowledges time of day", "professional yet friendly"]
+          }
+        ]
+      },
+      "problem_description_test": {
+        "name": "Problem Understanding Test",
+        "description": "Test agent's ability to understand and respond to problem descriptions",
+        "scenarios": [
+          {
+            "user_input": "I'm having trouble with my account",
+            "expected_behavior": "Acknowledgment and information gathering",
+            "success_criteria": ["empathy shown", "clarifying questions asked", "solution-oriented approach"]
+          },
+          {
+            "user_input": "This isn't working properly",
+            "expected_behavior": "Request for specific details",
+            "success_criteria": ["asks for specifics", "shows understanding", "begins troubleshooting process"]
+          }
+        ]
+      },
+      "information_request_test": {
+        "name": "Information Request Test",
+        "description": "Test agent's response to requests for information",
+        "scenarios": [
+          {
+            "user_input": "What are your business hours?",
+            "expected_behavior": "Clear, accurate information provided",
+            "success_criteria": ["information provided", "accurate details", "additional relevant info offered"]
+          },
+          {
+            "user_input": "How do I contact support?",
+            "expected_behavior": "Multiple contact options provided",
+            "success_criteria": ["options listed", "clear instructions", "availability mentioned"]
+          }
+        ]
+      },
+      "complex_query_test": {
+        "name": "Complex Query Handling",
+        "description": "Test agent's ability to handle multi-part or complex requests",
+        "scenarios": [
+          {
+            "user_input": "I need help with setting up my account, updating my billing information, and understanding your pricing plans",
+            "expected_behavior": "Break down request into components",
+            "success_criteria": ["acknowledges multiple requests", "prioritizes or sequences responses", "addresses each component"]
+          }
+        ]
+      }
+    }
+  },
+  "tool_tests": {
+    "name": "Tool Integration Test Templates", 
+    "description": "Templates for testing agent tool usage and external integrations",
+    "templates": {
+      "api_integration_test": {
+        "name": "API Tool Integration Test",
+        "description": "Test agent's ability to use external API tools correctly",
+        "test_cases": [
+          {
+            "scenario": "User requests weather information",
+            "expected_tool_use": "weather API call with user's location",
+            "success_criteria": ["correct API called", "parameters passed properly", "response interpreted correctly"]
+          },
+          {
+            "scenario": "User requests account information lookup",
+            "expected_tool_use": "account database query",
+            "success_criteria": ["proper authentication", "correct query structure", "privacy maintained"]
+          }
+        ]
+      },
+      "webhook_test": {
+        "name": "Webhook Integration Test",
+        "description": "Test agent's webhook functionality",
+        "test_cases": [
+          {
+            "trigger": "Conversation completion",
+            "expected_webhook": "Send conversation summary to CRM",
+            "success_criteria": ["webhook triggered", "correct payload format", "successful delivery"]
+          }
+        ]
+      },
+      "database_test": {
+        "name": "Database Tool Test",
+        "description": "Test agent's database interaction capabilities",
+        "test_cases": [
+          {
+            "scenario": "User information lookup",
+            "expected_query": "SELECT user data with proper filtering",
+            "success_criteria": ["secure query execution", "correct results returned", "no data leakage"]
+          }
+        ]
+      }
+    }
+  },
+  "integration_tests": {
+    "name": "End-to-End Integration Test Templates",
+    "description": "Templates for comprehensive system integration testing",
+    "templates": {
+      "full_conversation_flow": {
+        "name": "Complete Conversation Flow Test",
+        "description": "Test entire conversation lifecycle from start to finish",
+        "flow_steps": [
+          {
+            "step": "Initiation",
+            "actions": ["User connects", "Agent greets", "Context established"],
+            "validation": ["Connection successful", "Greeting appropriate", "Context captured"]
+          },
+          {
+            "step": "Information Gathering",
+            "actions": ["Agent asks questions", "User provides details", "Information processed"],
+            "validation": ["Relevant questions asked", "Information captured accurately", "Understanding demonstrated"]
+          },
+          {
+            "step": "Problem Resolution",
+            "actions": ["Solution provided", "Tools used if needed", "Resolution confirmed"],
+            "validation": ["Appropriate solution offered", "Tools executed correctly", "User satisfaction confirmed"]
+          },
+          {
+            "step": "Conclusion",
+            "actions": ["Summary provided", "Next steps clarified", "Conversation ended"],
+            "validation": ["Clear summary", "Actionable next steps", "Professional conclusion"]
+          }
+        ]
+      },
+      "multi_agent_handoff": {
+        "name": "Multi-Agent Transfer Test",
+        "description": "Test seamless handoff between specialized agents",
+        "scenarios": [
+          {
+            "initial_agent": "General support agent",
+            "trigger": "Technical issue identified",
+            "target_agent": "Technical specialist",
+            "validation": ["Transfer triggered appropriately", "Context preserved", "User informed of transfer", "Specialist has full context"]
+          }
+        ]
+      }
+    }
+  },
+  "performance_tests": {
+    "name": "Performance Test Templates",
+    "description": "Templates for testing agent performance and response characteristics",
+    "templates": {
+      "response_time_test": {
+        "name": "Response Time Validation",
+        "description": "Test agent response speed under various conditions",
+        "metrics": {
+          "initial_response": {
+            "target": "< 2 seconds",
+            "measurement": "Time from user input to first agent response"
+          },
+          "follow_up_response": {
+            "target": "< 1.5 seconds", 
+            "measurement": "Time for subsequent responses in conversation"
+          },
+          "complex_query_response": {
+            "target": "< 5 seconds",
+            "measurement": "Time for responses requiring tool use or complex processing"
+          }
+        }
+      },
+      "concurrent_conversation_test": {
+        "name": "Concurrent Load Test",
+        "description": "Test agent performance with multiple simultaneous conversations",
+        "scenarios": [
+          {
+            "concurrent_users": 10,
+            "duration": "5 minutes",
+            "validation": ["All conversations handled", "Response times maintained", "No errors or dropped connections"]
+          },
+          {
+            "concurrent_users": 50,
+            "duration": "10 minutes", 
+            "validation": ["Performance degrades gracefully", "Error handling appropriate", "Priority conversations maintained"]
+          }
+        ]
+      }
+    }
+  },
+  "regression_tests": {
+    "name": "Regression Test Templates",
+    "description": "Templates for ensuring existing functionality continues to work after changes",
+    "templates": {
+      "core_functionality_regression": {
+        "name": "Core Function Regression Suite",
+        "description": "Validate all core agent capabilities remain functional",
+        "test_areas": [
+          "Basic conversation handling",
+          "Tool integration",
+          "Knowledge base access",
+          "Transfer capabilities",
+          "Error handling"
+        ]
+      },
+      "configuration_regression": {
+        "name": "Configuration Change Regression",
+        "description": "Test impact of configuration changes on agent behavior",
+        "change_types": [
+          "System prompt updates",
+          "Voice configuration changes", 
+          "Tool availability changes",
+          "Knowledge base updates"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,373 @@
+{
+  "common_tool_configs": {
+    "name": "Common Tool Configuration Templates",
+    "description": "Ready-to-use configuration templates for popular integrations and common use cases",
+    "api_integrations": {
+      "openai_integration": {
+        "name": "OpenAI API Integration",
+        "description": "Connect to OpenAI services for AI capabilities",
+        "tool_type": "api",
+        "configuration": {
+          "endpoint": "https://api.openai.com/v1/chat/completions",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {OPENAI_API_KEY}"
+          },
+          "parameters": {
+            "model": "gpt-4",
+            "messages": "{messages}",
+            "temperature": 0.7,
+            "max_tokens": 1000
+          }
+        },
+        "secrets_required": ["OPENAI_API_KEY"],
+        "use_cases": [
+          "Text generation and completion",
+          "Language translation",
+          "Content summarization",
+          "Question answering"
+        ]
+      },
+      "stripe_integration": {
+        "name": "Stripe Payment Processing",
+        "description": "Handle payment operations through Stripe API",
+        "tool_type": "api",
+        "configuration": {
+          "endpoint": "https://api.stripe.com/v1",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Bearer {STRIPE_SECRET_KEY}"
+          }
+        },
+        "secrets_required": ["STRIPE_SECRET_KEY"],
+        "approval_recommended": "always",
+        "use_cases": [
+          "Process payments",
+          "Create customers",
+          "Manage subscriptions",
+          "Handle refunds"
+        ]
+      },
+      "slack_integration": {
+        "name": "Slack Messaging Integration",
+        "description": "Send messages and interact with Slack workspaces",
+        "tool_type": "api",
+        "configuration": {
+          "endpoint": "https://slack.com/api",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {SLACK_BOT_TOKEN}"
+          }
+        },
+        "secrets_required": ["SLACK_BOT_TOKEN"],
+        "use_cases": [
+          "Send notifications",
+          "Create channels",
+          "Manage team communication",
+          "Bot interactions"
+        ]
+      },
+      "hubspot_integration": {
+        "name": "HubSpot CRM Integration",
+        "description": "Manage contacts, deals, and CRM operations",
+        "tool_type": "api",
+        "configuration": {
+          "endpoint": "https://api.hubapi.com",
+          "method": "GET/POST/PUT",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {HUBSPOT_ACCESS_TOKEN}"
+          }
+        },
+        "secrets_required": ["HUBSPOT_ACCESS_TOKEN"],
+        "use_cases": [
+          "Contact management",
+          "Deal tracking",
+          "Email marketing",
+          "Sales analytics"
+        ]
+      }
+    },
+    "database_integrations": {
+      "postgresql_integration": {
+        "name": "PostgreSQL Database Integration",
+        "description": "Execute SQL queries against PostgreSQL databases",
+        "tool_type": "database",
+        "configuration": {
+          "connection_string": "{DATABASE_URL}",
+          "query_timeout": 30,
+          "max_connections": 5,
+          "ssl_mode": "require"
+        },
+        "secrets_required": ["DATABASE_URL"],
+        "query_templates": {
+          "select_user": "SELECT * FROM users WHERE email = $1",
+          "insert_order": "INSERT INTO orders (customer_id, amount, status) VALUES ($1, $2, $3)",
+          "update_status": "UPDATE orders SET status = $1 WHERE id = $2"
+        },
+        "security_features": [
+          "Prepared statements",
+          "Parameter validation",
+          "Read-only user for queries",
+          "Query logging"
+        ]
+      },
+      "mongodb_integration": {
+        "name": "MongoDB Database Integration",
+        "description": "Execute operations against MongoDB collections",
+        "tool_type": "database",
+        "configuration": {
+          "connection_string": "{MONGODB_URI}",
+          "database": "{DATABASE_NAME}",
+          "timeout": 30000,
+          "ssl": true
+        },
+        "secrets_required": ["MONGODB_URI", "DATABASE_NAME"],
+        "operations": [
+          "find documents",
+          "insert documents", 
+          "update documents",
+          "delete documents",
+          "aggregation pipelines"
+        ]
+      }
+    },
+    "webhook_integrations": {
+      "github_webhook": {
+        "name": "GitHub Webhook Handler",
+        "description": "Process GitHub repository events",
+        "tool_type": "webhook",
+        "configuration": {
+          "webhook_url": "{WEBHOOK_ENDPOINT}",
+          "events": [
+            "push",
+            "pull_request",
+            "issues",
+            "release"
+          ],
+          "secret": "{GITHUB_WEBHOOK_SECRET}"
+        },
+        "secrets_required": ["GITHUB_WEBHOOK_SECRET"],
+        "processing_logic": [
+          "Verify webhook signature",
+          "Parse event payload",
+          "Trigger appropriate actions",
+          "Send confirmation response"
+        ]
+      },
+      "stripe_webhook": {
+        "name": "Stripe Webhook Handler",
+        "description": "Process Stripe payment events",
+        "tool_type": "webhook",
+        "configuration": {
+          "webhook_url": "{WEBHOOK_ENDPOINT}",
+          "events": [
+            "payment_intent.succeeded",
+            "customer.subscription.created",
+            "invoice.payment_failed"
+          ],
+          "endpoint_secret": "{STRIPE_WEBHOOK_SECRET}"
+        },
+        "secrets_required": ["STRIPE_WEBHOOK_SECRET"],
+        "approval_recommended": "fine_grained"
+      }
+    },
+    "workflow_integrations": {
+      "n8n_integration": {
+        "name": "n8n Workflow Automation",
+        "description": "Trigger and monitor n8n workflows",
+        "tool_type": "workflow",
+        "configuration": {
+          "server_url": "{N8N_SERVER_URL}/webhook",
+          "authentication": "webhook_token",
+          "timeout": 300
+        },
+        "secrets_required": ["N8N_WEBHOOK_TOKEN"],
+        "workflow_triggers": [
+          "Customer inquiry processing",
+          "Order fulfillment automation",
+          "Email marketing campaigns",
+          "Data synchronization tasks"
+        ]
+      },
+      "zapier_integration": {
+        "name": "Zapier Automation Integration",
+        "description": "Trigger Zapier zaps from agent interactions",
+        "tool_type": "webhook",
+        "configuration": {
+          "webhook_url": "{ZAPIER_WEBHOOK_URL}",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "use_cases": [
+          "Lead generation automation",
+          "Customer onboarding flows",
+          "Support ticket creation",
+          "CRM data updates"
+        ]
+      }
+    },
+    "file_storage_integrations": {
+      "aws_s3_integration": {
+        "name": "AWS S3 File Storage",
+        "description": "Upload, download, and manage files in S3",
+        "tool_type": "api",
+        "configuration": {
+          "endpoint": "https://s3.amazonaws.com",
+          "region": "{AWS_REGION}",
+          "bucket": "{S3_BUCKET}",
+          "authentication": "aws_signature_v4"
+        },
+        "secrets_required": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "S3_BUCKET"
+        ],
+        "operations": [
+          "Upload files",
+          "Download files",
+          "List objects",
+          "Delete objects",
+          "Generate presigned URLs"
+        ]
+      },
+      "google_drive_integration": {
+        "name": "Google Drive Integration",
+        "description": "Manage files and folders in Google Drive",
+        "tool_type": "api",
+        "configuration": {
+          "endpoint": "https://www.googleapis.com/drive/v3",
+          "authentication": "oauth2",
+          "scopes": [
+            "https://www.googleapis.com/auth/drive",
+            "https://www.googleapis.com/auth/drive.file"
+          ]
+        },
+        "secrets_required": [
+          "GOOGLE_CLIENT_ID",
+          "GOOGLE_CLIENT_SECRET",
+          "GOOGLE_REFRESH_TOKEN"
+        ]
+      }
+    }
+  },
+  "configuration_validation": {
+    "name": "Configuration Validation Rules",
+    "description": "Validation rules and checks for tool configurations",
+    "validation_rules": {
+      "api_tools": {
+        "required_fields": ["endpoint", "method"],
+        "optional_fields": ["headers", "parameters", "timeout"],
+        "validation_checks": [
+          "Endpoint URL is valid and reachable",
+          "HTTP method is supported",
+          "Headers contain required authentication",
+          "Parameters match expected schema"
+        ]
+      },
+      "database_tools": {
+        "required_fields": ["connection_string"],
+        "optional_fields": ["timeout", "ssl_mode", "pool_size"],
+        "validation_checks": [
+          "Connection string is valid",
+          "Database is accessible",
+          "Credentials are valid",
+          "SSL configuration is correct"
+        ]
+      },
+      "webhook_tools": {
+        "required_fields": ["webhook_url"],
+        "optional_fields": ["events", "secret", "verification"],
+        "validation_checks": [
+          "Webhook URL is accessible",
+          "Event types are valid",
+          "Signature verification is configured",
+          "Rate limiting is appropriate"
+        ]
+      }
+    },
+    "security_checks": {
+      "authentication": [
+        "API keys are stored securely",
+        "OAuth tokens have appropriate scopes",
+        "Database credentials use least privilege",
+        "Webhook secrets are properly configured"
+      ],
+      "authorization": [
+        "Tool permissions match intended use",
+        "Approval policies are appropriate",
+        "Access is limited to necessary agents",
+        "Audit logging is enabled"
+      ],
+      "data_protection": [
+        "Sensitive data is encrypted in transit",
+        "PII handling follows regulations",
+        "Data retention policies are defined",
+        "Backup and recovery procedures exist"
+      ]
+    }
+  },
+  "troubleshooting_guides": {
+    "name": "Common Integration Issues and Solutions",
+    "description": "Troubleshooting guides for common tool integration problems",
+    "common_issues": {
+      "authentication_failures": {
+        "symptoms": [
+          "401 Unauthorized responses",
+          "Invalid API key errors",
+          "Token expired messages"
+        ],
+        "solutions": [
+          "Verify API key is correct and active",
+          "Check token expiration dates",
+          "Ensure proper authentication headers",
+          "Validate OAuth scopes and permissions"
+        ]
+      },
+      "connection_timeouts": {
+        "symptoms": [
+          "Request timeout errors",
+          "Network unreachable messages",
+          "Slow response times"
+        ],
+        "solutions": [
+          "Increase timeout values",
+          "Check network connectivity",
+          "Verify endpoint URLs",
+          "Implement retry logic with backoff"
+        ]
+      },
+      "data_format_errors": {
+        "symptoms": [
+          "JSON parsing errors",
+          "Schema validation failures",
+          "Unexpected response formats"
+        ],
+        "solutions": [
+          "Validate request/response schemas",
+          "Check API version compatibility",
+          "Verify content-type headers",
+          "Update data transformation logic"
+        ]
+      },
+      "rate_limit_exceeded": {
+        "symptoms": [
+          "429 Too Many Requests responses",
+          "Rate limit exceeded errors",
+          "Throttling warnings"
+        ],
+        "solutions": [
+          "Implement request throttling",
+          "Add exponential backoff",
+          "Cache responses when appropriate",
+          "Upgrade API plan if necessary"
+        ]
+      }
+    }
+  }
+}

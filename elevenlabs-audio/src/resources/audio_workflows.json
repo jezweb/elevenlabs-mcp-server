@@ -1,0 +1,297 @@
+{
+  "tts_workflows": {
+    "name": "Text-to-Speech Workflow Templates",
+    "description": "Comprehensive workflows for generating high-quality speech from text using ElevenLabs",
+    "workflows": {
+      "basic_tts": {
+        "name": "Basic Text-to-Speech",
+        "description": "Simple text-to-speech conversion with default settings",
+        "steps": [
+          {
+            "step": "Input preparation",
+            "action": "Clean and format text for optimal TTS results",
+            "considerations": [
+              "Remove excessive punctuation",
+              "Expand abbreviations",
+              "Add pronunciation guides for complex words",
+              "Consider SSML markup for advanced control"
+            ]
+          },
+          {
+            "step": "Voice selection",
+            "action": "Choose appropriate voice for content and audience",
+            "voice_options": {
+              "Rachel": "21m00Tcm4TlvDq8ikWAM",
+              "Adam": "pNInz6obpgDQGcFmaJgB", 
+              "Sam": "yoZ06aMxZJJ28mfd3POQ",
+              "Bella": "EXAVITQu4vr4xnSDxMaL",
+              "Antoni": "ErXwobaYiN019PkySvjV"
+            }
+          },
+          {
+            "step": "Model selection",
+            "action": "Select model based on quality and speed requirements",
+            "model_options": {
+              "eleven_multilingual_v2": "Best quality, 29 languages supported",
+              "eleven_turbo_v2": "Fast generation with high quality",
+              "eleven_flash_v2": "Ultra-fast for real-time applications"
+            }
+          },
+          {
+            "step": "Parameter tuning",
+            "action": "Adjust voice parameters for desired output",
+            "parameters": {
+              "stability": "0.5 (default) - Higher = more consistent, Lower = more expressive",
+              "similarity_boost": "0.75 (default) - Higher = closer to original voice",
+              "style": "0.0 (default) - Higher = more style exaggeration",
+              "use_speaker_boost": "true (recommended) - Enhances voice clarity"
+            }
+          }
+        ]
+      },
+      "dialogue_generation": {
+        "name": "Multi-Speaker Dialogue",
+        "description": "Generate conversations between multiple speakers with distinct voices",
+        "use_cases": [
+          "Podcast creation",
+          "Audiobook narration with characters",
+          "Educational content with multiple speakers",
+          "Training scenarios and role-play audio"
+        ],
+        "setup": {
+          "dialogue_structure": [
+            {
+              "speaker": "Host",
+              "text": "Welcome to today's episode"
+            },
+            {
+              "speaker": "Guest", 
+              "text": "Thanks for having me"
+            }
+          ],
+          "voice_mapping": {
+            "Host": "21m00Tcm4TlvDq8ikWAM",
+            "Guest": "pNInz6obpgDQGcFmaJgB"
+          }
+        }
+      },
+      "timestamped_tts": {
+        "name": "TTS with Word Timestamps",
+        "description": "Generate speech with precise word-level timing information",
+        "use_cases": [
+          "Subtitle synchronization",
+          "Interactive audio applications",
+          "Speech analysis and research",
+          "Karaoke-style applications"
+        ],
+        "output_format": {
+          "audio": "Generated speech audio file",
+          "timestamps": "JSON with word-level timing data",
+          "format": [
+            {
+              "word": "Hello",
+              "start": 0.0,
+              "end": 0.5
+            }
+          ]
+        }
+      }
+    }
+  },
+  "stt_workflows": {
+    "name": "Speech-to-Text Workflow Templates", 
+    "description": "Comprehensive workflows for accurate speech transcription and analysis",
+    "workflows": {
+      "basic_transcription": {
+        "name": "Basic Audio Transcription",
+        "description": "Convert audio files to text with high accuracy",
+        "supported_formats": [
+          "MP3", "WAV", "FLAC", "M4A", "OGG"
+        ],
+        "preprocessing": [
+          "Ensure audio quality is good (clear speech, minimal background noise)",
+          "Optimal audio length: under 25MB file size",
+          "Sample rate: 16kHz or higher recommended",
+          "Mono or stereo both supported"
+        ],
+        "parameters": {
+          "language_code": "ISO 639-1 code (e.g., 'en', 'es', 'fr') - auto-detect if not specified",
+          "diarize": "false (default) - Set to true for speaker separation"
+        }
+      },
+      "diarized_transcription": {
+        "name": "Speaker-Separated Transcription",
+        "description": "Transcribe audio with speaker identification and separation",
+        "use_cases": [
+          "Meeting transcriptions",
+          "Interview processing", 
+          "Multi-speaker content analysis",
+          "Podcast transcript generation"
+        ],
+        "output_format": {
+          "speakers": "Identified as Speaker 1, Speaker 2, etc.",
+          "timestamps": "When each speaker talks",
+          "confidence": "Confidence scores for speech recognition"
+        },
+        "best_practices": [
+          "Ensure speakers have distinct voices",
+          "Minimize speaker overlap",
+          "Good audio quality essential for accuracy",
+          "Consider speaker count limitations"
+        ]
+      },
+      "batch_transcription": {
+        "name": "Bulk Audio Processing",
+        "description": "Process multiple audio files efficiently",
+        "workflow": [
+          {
+            "step": "File preparation",
+            "action": "Organize audio files in accessible directory",
+            "tips": [
+              "Use consistent naming convention",
+              "Check all files are in supported format",
+              "Verify file sizes are within limits"
+            ]
+          },
+          {
+            "step": "Batch processing",
+            "action": "Submit all files for transcription",
+            "parameters": {
+              "save_transcripts": "true - Saves individual text files",
+              "language_code": "Consistent language for all files",
+              "diarize": "Apply to all files if needed"
+            }
+          },
+          {
+            "step": "Results processing",
+            "action": "Review and organize transcription outputs",
+            "outputs": [
+              "Individual transcript files",
+              "Batch processing summary",
+              "Error reports for failed files"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "sound_effects_workflows": {
+    "name": "Sound Effects Generation Workflows",
+    "description": "Create custom sound effects from text descriptions",
+    "workflows": {
+      "single_effect": {
+        "name": "Individual Sound Effect",
+        "description": "Generate single sound effect from text description",
+        "parameters": {
+          "text": "Detailed description of desired sound",
+          "duration_seconds": "0.5 to 22 seconds (5.0 default)",
+          "save_to_file": "Optional file path for saving"
+        },
+        "description_tips": [
+          "Be specific and descriptive",
+          "Include context (indoor/outdoor, size, material)",
+          "Mention intensity and character",
+          "Examples: 'Heavy rain on metal roof', 'Gentle ocean waves on sandy beach'"
+        ]
+      },
+      "batch_effects": {
+        "name": "Multiple Sound Effects",
+        "description": "Generate multiple sound effects efficiently",
+        "structure": [
+          {
+            "text": "Description of first effect",
+            "duration": 3.0,
+            "name": "effect_001_rain"
+          },
+          {
+            "text": "Description of second effect", 
+            "duration": 5.0,
+            "name": "effect_002_wind"
+          }
+        ],
+        "organization": {
+          "save_directory": "Specify folder for organized storage",
+          "naming_convention": "Use descriptive, consistent names",
+          "file_format": "MP3 format for compatibility"
+        }
+      }
+    }
+  },
+  "voice_transformation_workflows": {
+    "name": "Voice Transformation Workflows",
+    "description": "Transform and enhance audio using voice cloning and isolation",
+    "workflows": {
+      "voice_conversion": {
+        "name": "Speech-to-Speech Voice Conversion",
+        "description": "Transform existing audio to sound like a different voice",
+        "requirements": {
+          "input_audio": "Clear speech audio (MP3, WAV, etc.)",
+          "target_voice": "ElevenLabs voice ID for transformation",
+          "model": "eleven_english_sts_v2 (recommended for voice transformation)"
+        },
+        "parameters": {
+          "stability": "0.5 (balance between consistency and variation)",
+          "similarity_boost": "0.75 (how closely to match target voice)",
+          "model_id": "eleven_english_sts_v2 (optimized for voice conversion)"
+        },
+        "use_cases": [
+          "Voice consistency across recordings",
+          "Character voice creation",
+          "Accent or tone modification",
+          "Anonymization while preserving speech patterns"
+        ]
+      },
+      "audio_isolation": {
+        "name": "Audio Enhancement and Isolation",
+        "description": "Remove background noise and isolate speech",
+        "applications": [
+          "Podcast post-production",
+          "Interview cleanup",
+          "Voice recording enhancement",
+          "Noisy audio restoration"
+        ],
+        "input_requirements": [
+          "Audio with speech content",
+          "Any common audio format supported",
+          "Works best with consistent background noise"
+        ],
+        "expected_results": [
+          "Reduced background noise",
+          "Enhanced speech clarity",
+          "Improved overall audio quality",
+          "Better signal-to-noise ratio"
+        ]
+      },
+      "batch_transformation": {
+        "name": "Bulk Voice Processing",
+        "description": "Transform multiple audio files with consistent voice",
+        "workflow": [
+          {
+            "step": "Preparation",
+            "actions": [
+              "Select consistent target voice ID",
+              "Prepare all input audio files",
+              "Create organized output directory"
+            ]
+          },
+          {
+            "step": "Processing",
+            "parameters": {
+              "voice_id": "Consistent target voice for all files", 
+              "model_id": "eleven_english_sts_v2",
+              "save_directory": "Organized output location"
+            }
+          },
+          {
+            "step": "Quality control",
+            "actions": [
+              "Review transformed audio files",
+              "Check consistency across batch",
+              "Identify any files needing reprocessing"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

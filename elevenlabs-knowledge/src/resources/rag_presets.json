@@ -1,0 +1,68 @@
+{
+  "customer_support": {
+    "name": "Customer Support RAG",
+    "description": "Optimized for customer support agents with quick, accurate answers",
+    "config": {
+      "enabled": true,
+      "embedding_model": "e5_mistral_7b_instruct",
+      "max_documents_length": "8000"
+    },
+    "use_cases": ["FAQ responses", "troubleshooting", "product information"],
+    "optimization": "Balanced for speed and accuracy"
+  },
+  "detailed_research": {
+    "name": "Detailed Research RAG",
+    "description": "For comprehensive responses requiring deep knowledge",
+    "config": {
+      "enabled": true,
+      "embedding_model": "e5_mistral_7b_instruct",
+      "max_documents_length": "15000"
+    },
+    "use_cases": ["technical explanations", "detailed analysis", "research queries"],
+    "optimization": "Maximized for comprehensive coverage"
+  },
+  "quick_answers": {
+    "name": "Quick Answer RAG",
+    "description": "Fast responses for simple queries",
+    "config": {
+      "enabled": true,
+      "embedding_model": "e5_mistral_7b_instruct",
+      "max_documents_length": "5000"
+    },
+    "use_cases": ["simple questions", "basic information", "quick lookups"],
+    "optimization": "Optimized for speed and brevity"
+  },
+  "technical_support": {
+    "name": "Technical Support RAG",
+    "description": "For technical documentation and code-related queries",
+    "config": {
+      "enabled": true,
+      "embedding_model": "e5_mistral_7b_instruct",
+      "max_documents_length": "12000"
+    },
+    "use_cases": ["API documentation", "technical troubleshooting", "code examples"],
+    "optimization": "Balanced for technical accuracy and completeness"
+  },
+  "conversational": {
+    "name": "Conversational RAG",
+    "description": "For natural, flowing conversations with context awareness",
+    "config": {
+      "enabled": true,
+      "embedding_model": "e5_mistral_7b_instruct",
+      "max_documents_length": "10000"
+    },
+    "use_cases": ["general chat", "contextual conversations", "follow-up questions"],
+    "optimization": "Balanced for natural conversation flow"
+  },
+  "minimal": {
+    "name": "Minimal RAG",
+    "description": "Lightweight configuration for basic knowledge retrieval",
+    "config": {
+      "enabled": true,
+      "embedding_model": "e5_mistral_7b_instruct",
+      "max_documents_length": "3000"
+    },
+    "use_cases": ["basic information", "simple responses", "resource-constrained scenarios"],
+    "optimization": "Minimal resource usage"
+  }
+}

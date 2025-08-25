@@ -1,0 +1,119 @@
+{
+  "feedback_collection": {
+    "name": "Conversation Feedback Template",
+    "description": "Structured template for collecting and managing conversation feedback",
+    "feedback_types": {
+      "rating_scale": {
+        "type": "numerical",
+        "scale": "1-5",
+        "descriptions": {
+          "1": "Poor - Major issues, failed interaction",
+          "2": "Below Average - Some problems, partially successful", 
+          "3": "Average - Acceptable, met basic needs",
+          "4": "Good - Effective interaction, minor issues only",
+          "5": "Excellent - Perfect interaction, exceeded expectations"
+        }
+      },
+      "categorical": {
+        "categories": ["accuracy", "helpfulness", "clarity", "speed", "professionalism"],
+        "ratings": ["poor", "fair", "good", "excellent"]
+      },
+      "open_ended": {
+        "prompts": [
+          "What did the agent do well?",
+          "What could be improved?",
+          "Did the agent understand your request?",
+          "Was the response helpful?"
+        ]
+      }
+    },
+    "metadata_fields": {
+      "conversation_id": "Unique conversation identifier",
+      "agent_id": "Agent that handled the conversation",
+      "user_type": "Customer category or segment",
+      "issue_category": "Type of inquiry or problem",
+      "resolution_status": "Whether issue was resolved"
+    }
+  },
+  "conversation_analysis": {
+    "name": "Conversation Analysis Framework",
+    "description": "Template for systematic conversation analysis and insights",
+    "analysis_dimensions": {
+      "duration_metrics": {
+        "total_duration": "Overall conversation length",
+        "response_times": "Agent response latency",
+        "user_wait_times": "User waiting periods",
+        "turn_distribution": "Balance of speaking time"
+      },
+      "content_analysis": {
+        "message_count": "Total exchanges",
+        "avg_message_length": "Average response length",
+        "topic_coverage": "Range of topics discussed",
+        "question_types": "Categories of user inquiries"
+      },
+      "outcome_tracking": {
+        "resolution_achieved": "Whether issue was resolved",
+        "follow_up_needed": "If additional contact required",
+        "user_satisfaction": "Overall satisfaction level",
+        "goal_completion": "Whether user goals were met"
+      }
+    }
+  },
+  "conversation_patterns": {
+    "name": "Common Conversation Flow Patterns",
+    "description": "Templates for recognizing and analyzing typical conversation structures",
+    "patterns": {
+      "support_inquiry": {
+        "flow": ["greeting", "problem_description", "troubleshooting", "resolution", "confirmation"],
+        "avg_duration": "5-10 minutes",
+        "typical_turns": "8-15 exchanges",
+        "success_indicators": ["issue_resolved", "user_satisfied", "clear_next_steps"]
+      },
+      "information_request": {
+        "flow": ["greeting", "question", "information_provided", "clarification", "completion"],
+        "avg_duration": "2-5 minutes", 
+        "typical_turns": "4-8 exchanges",
+        "success_indicators": ["information_delivered", "user_understanding", "no_follow_up_needed"]
+      },
+      "sales_inquiry": {
+        "flow": ["greeting", "needs_assessment", "solution_presentation", "objection_handling", "next_steps"],
+        "avg_duration": "10-20 minutes",
+        "typical_turns": "15-30 exchanges", 
+        "success_indicators": ["lead_qualified", "meeting_scheduled", "contact_captured"]
+      },
+      "complaint_resolution": {
+        "flow": ["greeting", "complaint_listening", "empathy_expression", "solution_offering", "follow_up_planning"],
+        "avg_duration": "8-15 minutes",
+        "typical_turns": "10-25 exchanges",
+        "success_indicators": ["customer_satisfaction", "issue_escalated_appropriately", "relationship_maintained"]
+      }
+    }
+  },
+  "quality_scoring": {
+    "name": "Conversation Quality Scoring Template",
+    "description": "Framework for evaluating conversation quality across multiple dimensions",
+    "scoring_criteria": {
+      "agent_performance": {
+        "greeting_quality": "Professional and welcoming opening",
+        "listening_skills": "Understanding user needs accurately",
+        "response_clarity": "Clear and understandable responses",
+        "problem_solving": "Effective issue resolution approach",
+        "closing": "Proper conversation conclusion"
+      },
+      "conversation_flow": {
+        "natural_progression": "Logical conversation development",
+        "topic_relevance": "Staying on topic and focused",
+        "transition_smoothness": "Smooth topic transitions",
+        "information_gathering": "Effective question asking",
+        "follow_through": "Consistent follow-up on commitments"
+      },
+      "user_experience": {
+        "wait_times": "Appropriate response timing",
+        "effort_required": "Minimal user effort needed",
+        "clarity_received": "User understood responses",
+        "satisfaction": "Overall user satisfaction",
+        "likelihood_to_recommend": "Would recommend service"
+      }
+    }
+  }
+}

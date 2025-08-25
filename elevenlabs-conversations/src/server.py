@@ -4,10 +4,12 @@ Provides tools for managing conversation history and playback.
 """
 
 import asyncio
+import json
 import logging
 import os
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastmcp import FastMCP
@@ -80,6 +82,34 @@ async def lifespan(app):
 
 # Register the lifespan with FastMCP
 mcp.lifespan_manager = lifespan
+
+# ============================================================
+# Resource Loading Helpers
+# ============================================================
+
+def load_resource(filename: str) -> Dict[str, Any]:
+    """Load a JSON resource file with proper error handling."""
+    resource_path = Path(__file__).parent / "resources" / filename
+    try:
+        if not resource_path.exists():
+            logger.error(f"Resource file not found: {resource_path}")
+            return {}
+        
+        with open(resource_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            logger.info(f"Successfully loaded {filename}: {len(data)} items")
+            return data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error in {filename}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error loading resource {filename}: {e}")
+        return {}
+
+# Load templates at module level for efficiency
+CONVERSATION_TEMPLATES = load_resource("conversation_templates.json")
+EXPORT_TEMPLATES = load_resource("export_templates.json")
+FEEDBACK_TEMPLATES = load_resource("feedback_templates.json")
 
 
 # Conversation Management Tools
@@ -399,8 +429,63 @@ async def export_conversations_tool(
 
 # Resources
 
-@mcp.resource("resource://documentation")
-async def get_documentation() -> str:
+@mcp.resource(
+    "resource://conversation-templates",
+    name="ElevenLabs Conversation Analysis Templates",
+    description="Templates for conversation feedback collection, quality analysis, and pattern recognition. Includes structured approaches to gathering user feedback, analyzing conversation flows, and measuring conversation quality across multiple dimensions.",
+    mime_type="application/json",
+    tags={"templates", "conversations", "feedback", "analysis"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_conversation_templates_resource() -> str:
+    """Get conversation templates as a JSON resource."""
+    return json.dumps(CONVERSATION_TEMPLATES, indent=2)
+
+@mcp.resource(
+    "resource://export-templates", 
+    name="ElevenLabs Conversation Export Templates",
+    description="Export format templates for conversation data including CSV structures, JSON schemas, filtered exports, and batch processing configurations. Includes compliance-ready export formats for audit trails and regulatory requirements.",
+    mime_type="application/json",
+    tags={"templates", "export", "data", "compliance"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_export_templates_resource() -> str:
+    """Get export templates as a JSON resource."""
+    return json.dumps(EXPORT_TEMPLATES, indent=2)
+
+@mcp.resource(
+    "resource://feedback-templates",
+    name="ElevenLabs Feedback Collection Templates", 
+    description="Comprehensive feedback collection and analysis templates including rating systems, feedback categories, collection prompts, and automated processing workflows. Supports various feedback methodologies from simple thumbs up/down to detailed NPS-style surveys.",
+    mime_type="application/json",
+    tags={"templates", "feedback", "ratings", "surveys"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_feedback_templates_resource() -> str:
+    """Get feedback templates as a JSON resource."""
+    return json.dumps(FEEDBACK_TEMPLATES, indent=2)
+
+@mcp.resource(
+    "resource://documentation",
+    name="ElevenLabs Conversations Server Documentation",
+    description="Complete documentation for the conversation management server including tool descriptions, usage examples, and API endpoints for conversation history, playback, and analytics.",
+    mime_type="text/markdown",
+    tags={"documentation", "help", "reference"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_documentation_resource() -> str:
     """Get server documentation."""
     return """
 # ElevenLabs Conversations MCP Server

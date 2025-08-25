@@ -6,7 +6,9 @@ Manages knowledge base, RAG configuration, and analytics.
 """
 
 import sys
+import json
 import logging
+from pathlib import Path
 from typing import Dict, Any, Optional
 from contextlib import asynccontextmanager
 
@@ -80,6 +82,34 @@ mcp = FastMCP(
     instructions="Manage ElevenLabs knowledge base and conversations",
     lifespan=lifespan
 )
+
+# ============================================================
+# Resource Loading Helpers
+# ============================================================
+
+def load_resource(filename: str) -> Dict[str, Any]:
+    """Load a JSON resource file with proper error handling."""
+    resource_path = Path(__file__).parent / "resources" / filename
+    try:
+        if not resource_path.exists():
+            logger.error(f"Resource file not found: {resource_path}")
+            return {}
+        
+        with open(resource_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            logger.info(f"Successfully loaded {filename}: {len(data)} items")
+            return data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error in {filename}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error loading resource {filename}: {e}")
+        return {}
+
+# Load templates at module level for efficiency
+KNOWLEDGE_TEMPLATES = load_resource("knowledge_templates.json")
+RAG_PRESETS = load_resource("rag_presets.json") 
+ANALYTICS_TEMPLATES = load_resource("analytics_templates.json")
 
 # ============================================================
 # Document Management Tools
@@ -383,8 +413,63 @@ async def get_knowledge_base_size_tool(agent_id: str) -> Dict[str, Any]:
 # Resources
 # ============================================================
 
-@mcp.resource("resource://documentation")
-async def get_documentation() -> str:
+@mcp.resource(
+    "resource://knowledge-templates",
+    name="ElevenLabs Knowledge Base Templates",
+    description="Templates and best practices for document management, content organization, and knowledge base setup. Includes examples for adding documents, organizing content by type, and following content best practices.",
+    mime_type="application/json",
+    tags={"templates", "documents", "knowledge_base", "content"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_knowledge_templates_resource() -> str:
+    """Get knowledge base templates as a JSON resource."""
+    return json.dumps(KNOWLEDGE_TEMPLATES, indent=2)
+
+@mcp.resource(
+    "resource://rag-presets", 
+    name="ElevenLabs RAG Configuration Presets",
+    description="Pre-configured RAG settings optimized for different use cases including customer support, technical documentation, quick answers, and detailed research. Each preset includes embedding model and document length configurations.",
+    mime_type="application/json",
+    tags={"templates", "rag", "configuration", "presets"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_rag_presets_resource() -> str:
+    """Get RAG configuration presets as a JSON resource."""
+    return json.dumps(RAG_PRESETS, indent=2)
+
+@mcp.resource(
+    "resource://analytics-templates",
+    name="ElevenLabs Knowledge Analytics Templates", 
+    description="Templates for performance metrics, reporting formats, and optimization insights. Includes weekly reports, export formats, agent usage analytics, and knowledge base optimization recommendations.",
+    mime_type="application/json",
+    tags={"templates", "analytics", "metrics", "reporting"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_analytics_templates_resource() -> str:
+    """Get analytics templates as a JSON resource."""
+    return json.dumps(ANALYTICS_TEMPLATES, indent=2)
+
+@mcp.resource(
+    "resource://documentation",
+    name="ElevenLabs Knowledge Server Documentation",
+    description="Complete documentation for the knowledge base management server including tool descriptions, usage examples, and API endpoints.",
+    mime_type="text/markdown",
+    tags={"documentation", "help", "reference"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_documentation_resource() -> str:
     """Get server documentation."""
     return """
 # ElevenLabs Knowledge MCP Server

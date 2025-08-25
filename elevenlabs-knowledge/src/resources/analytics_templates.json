@@ -1,0 +1,96 @@
+{
+  "performance_metrics": {
+    "name": "Performance Metrics Template",
+    "description": "Standard metrics for knowledge base performance evaluation",
+    "metrics": {
+      "usage": {
+        "documents_accessed": "Number of documents retrieved",
+        "query_frequency": "How often knowledge base is queried",
+        "response_accuracy": "Quality of retrieved information"
+      },
+      "efficiency": {
+        "retrieval_speed": "Time to find relevant documents",
+        "index_build_time": "Time to process and index documents",
+        "storage_utilization": "Efficiency of document storage"
+      },
+      "quality": {
+        "relevance_score": "How relevant retrieved docs are to queries",
+        "coverage": "Percentage of queries successfully answered",
+        "user_satisfaction": "Feedback on knowledge base effectiveness"
+      }
+    }
+  },
+  "weekly_report": {
+    "name": "Weekly Knowledge Base Report",
+    "description": "Template for weekly performance analysis",
+    "sections": {
+      "summary": {
+        "total_documents": "Count of documents in knowledge base",
+        "total_queries": "Number of queries processed",
+        "avg_response_time": "Average time to retrieve information"
+      },
+      "top_documents": {
+        "most_accessed": "Documents retrieved most frequently",
+        "most_helpful": "Documents with highest user ratings",
+        "recently_added": "New documents added this week"
+      },
+      "insights": {
+        "knowledge_gaps": "Areas where information is lacking",
+        "optimization_opportunities": "Ways to improve performance",
+        "user_feedback": "Summary of user comments and ratings"
+      }
+    }
+  },
+  "export_formats": {
+    "name": "Data Export Templates",
+    "description": "Standard formats for exporting knowledge base data",
+    "formats": {
+      "csv": {
+        "name": "CSV Export",
+        "description": "Tabular format for spreadsheet analysis",
+        "fields": ["document_id", "name", "created_date", "access_count", "agent_id"],
+        "use_cases": ["data analysis", "reporting", "backup"]
+      },
+      "json": {
+        "name": "JSON Export", 
+        "description": "Structured format with full metadata",
+        "fields": ["id", "name", "content", "metadata", "created_at", "updated_at"],
+        "use_cases": ["system integration", "migration", "detailed analysis"]
+      }
+    }
+  },
+  "agent_analytics": {
+    "name": "Agent Knowledge Usage Analytics",
+    "description": "Templates for analyzing how agents use knowledge base",
+    "metrics": {
+      "by_agent": {
+        "query_patterns": "Common types of queries per agent",
+        "knowledge_utilization": "How effectively agent uses knowledge",
+        "improvement_areas": "Knowledge gaps affecting agent performance"
+      },
+      "knowledge_effectiveness": {
+        "answer_quality": "Quality of responses using knowledge base",
+        "user_satisfaction": "User feedback on knowledge-based responses",
+        "resolution_rate": "Percentage of issues resolved using knowledge"
+      }
+    }
+  },
+  "optimization_insights": {
+    "name": "Knowledge Base Optimization",
+    "description": "Templates for identifying optimization opportunities",
+    "areas": {
+      "content_gaps": {
+        "description": "Missing information frequently requested",
+        "indicators": ["unanswered queries", "low confidence scores", "user feedback"]
+      },
+      "redundant_content": {
+        "description": "Duplicate or overlapping information",
+        "indicators": ["similar documents", "conflicting information", "outdated content"]
+      },
+      "access_patterns": {
+        "description": "How users and agents access knowledge",
+        "indicators": ["popular documents", "search patterns", "navigation paths"]
+      }
+    }
+  }
+}

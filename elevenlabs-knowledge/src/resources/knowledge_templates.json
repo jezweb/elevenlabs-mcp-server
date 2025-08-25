@@ -1,0 +1,68 @@
+{
+  "document_url": {
+    "name": "Add Document from URL",
+    "description": "Template for adding documents to knowledge base from web URLs",
+    "example": {
+      "url": "https://docs.example.com/api-guide",
+      "name": "API Documentation",
+      "agent_id": "agent_abc123"
+    },
+    "use_cases": ["documentation", "articles", "guides", "API docs"],
+    "best_practices": [
+      "Use descriptive names that identify the content",
+      "Verify URL is publicly accessible",
+      "Consider content freshness and update frequency"
+    ]
+  },
+  "document_text": {
+    "name": "Add Text Document",
+    "description": "Template for adding text documents to knowledge base",
+    "example": {
+      "text": "This is important company policy information...",
+      "name": "Company Policy - Remote Work",
+      "agent_id": "agent_abc123"
+    },
+    "use_cases": ["policies", "procedures", "FAQs", "knowledge articles"],
+    "best_practices": [
+      "Structure text with clear headings",
+      "Keep content focused and relevant",
+      "Update regularly to maintain accuracy"
+    ]
+  },
+  "knowledge_base_organization": {
+    "name": "Knowledge Base Organization",
+    "description": "Best practices for organizing documents in knowledge base",
+    "categories": {
+      "customer_support": {
+        "description": "Customer-facing information and troubleshooting",
+        "document_types": ["FAQs", "troubleshooting guides", "product info"]
+      },
+      "internal_procedures": {
+        "description": "Internal processes and procedures",
+        "document_types": ["workflows", "policies", "training materials"]
+      },
+      "technical_documentation": {
+        "description": "Technical specifications and API docs",
+        "document_types": ["API docs", "technical specs", "integration guides"]
+      }
+    }
+  },
+  "content_types": {
+    "name": "Supported Content Types",
+    "description": "Types of content that work well in knowledge bases",
+    "supported": {
+      "structured": {
+        "types": ["FAQs", "procedures", "checklists"],
+        "benefits": "Easy to parse and reference"
+      },
+      "narrative": {
+        "types": ["guides", "explanations", "case studies"],
+        "benefits": "Provides context and understanding"
+      },
+      "reference": {
+        "types": ["API docs", "specifications", "glossaries"],
+        "benefits": "Quick lookup and precise answers"
+      }
+    }
+  }
+}

@@ -1,0 +1,327 @@
+{
+  "mcp_server_patterns": {
+    "name": "MCP Server Integration Patterns",
+    "description": "Common patterns and configurations for integrating MCP servers with ElevenLabs agents",
+    "patterns": {
+      "api_integration": {
+        "name": "External API Integration",
+        "description": "Connect agents to external REST APIs through MCP servers",
+        "use_cases": [
+          "Weather data retrieval",
+          "CRM system integration", 
+          "Database queries",
+          "Third-party service automation"
+        ],
+        "configuration": {
+          "server_type": "HTTP",
+          "transport": "RESTful HTTP requests",
+          "authentication": "API keys, OAuth, or basic auth",
+          "data_format": "JSON request/response"
+        },
+        "example_config": {
+          "server_url": "https://api.example.com/mcp",
+          "server_type": "HTTP",
+          "name": "External API Server",
+          "description": "Connects to external REST API endpoints"
+        },
+        "best_practices": [
+          "Use HTTPS for secure communication",
+          "Implement proper error handling",
+          "Set appropriate timeout values",
+          "Monitor API rate limits",
+          "Cache responses when appropriate"
+        ]
+      },
+      "workflow_automation": {
+        "name": "Workflow Automation Integration",
+        "description": "Connect to workflow engines like n8n, Zapier, or custom automation platforms",
+        "use_cases": [
+          "Trigger automated workflows",
+          "Multi-step business processes",
+          "Data transformation pipelines",
+          "Notification and alert systems"
+        ],
+        "configuration": {
+          "server_type": "SSE",
+          "transport": "Server-Sent Events for real-time updates",
+          "authentication": "Webhook tokens or API keys",
+          "data_format": "JSON with workflow context"
+        },
+        "example_config": {
+          "server_url": "https://n8n.company.com/webhook/mcp",
+          "server_type": "SSE",
+          "name": "N8N Automation Server",
+          "description": "Triggers and monitors automated workflows"
+        },
+        "workflow_triggers": [
+          "Customer inquiry received",
+          "Order status changed",
+          "Support ticket created",
+          "Scheduled maintenance task"
+        ]
+      },
+      "database_integration": {
+        "name": "Database Connection Pattern",
+        "description": "Connect agents to databases for data retrieval and updates",
+        "use_cases": [
+          "Customer data lookup",
+          "Inventory management",
+          "Reporting and analytics",
+          "Content management systems"
+        ],
+        "configuration": {
+          "server_type": "HTTP",
+          "transport": "SQL query proxy",
+          "authentication": "Database credentials via secrets",
+          "data_format": "Structured query results"
+        },
+        "security_considerations": [
+          "Use read-only database users when possible",
+          "Implement query whitelisting",
+          "Sanitize all input parameters",
+          "Use prepared statements",
+          "Monitor for suspicious queries"
+        ]
+      },
+      "real_time_integration": {
+        "name": "Real-time Data Integration",
+        "description": "Connect to real-time data sources and event streams",
+        "use_cases": [
+          "Live chat integrations",
+          "Real-time monitoring",
+          "IoT device data",
+          "Financial market data"
+        ],
+        "configuration": {
+          "server_type": "SSE",
+          "transport": "Event streaming",
+          "authentication": "Stream tokens",
+          "data_format": "Event-driven JSON messages"
+        },
+        "implementation": {
+          "connection_management": "Maintain persistent connections",
+          "error_recovery": "Automatic reconnection logic",
+          "data_buffering": "Handle connection interruptions",
+          "filtering": "Process only relevant events"
+        }
+      }
+    }
+  },
+  "tool_creation_patterns": {
+    "name": "Custom Tool Creation Patterns",
+    "description": "Templates and patterns for creating custom tools and integrations",
+    "tool_types": {
+      "api_tool": {
+        "name": "API Integration Tool",
+        "description": "Tool that calls external REST APIs",
+        "configuration_schema": {
+          "endpoint": "API endpoint URL",
+          "method": "HTTP method (GET, POST, PUT, DELETE)",
+          "headers": "Request headers including authentication",
+          "parameters": "Query parameters or request body structure",
+          "response_mapping": "How to process API response"
+        },
+        "example": {
+          "name": "Weather Lookup",
+          "description": "Get current weather for a location",
+          "tool_type": "api",
+          "configuration": {
+            "endpoint": "https://api.openweathermap.org/data/2.5/weather",
+            "method": "GET",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "parameters": {
+              "q": "{location}",
+              "appid": "{api_key}",
+              "units": "metric"
+            }
+          }
+        }
+      },
+      "webhook_tool": {
+        "name": "Webhook Handler Tool",
+        "description": "Tool that receives and processes webhooks",
+        "configuration_schema": {
+          "webhook_url": "URL to receive webhooks",
+          "events": "List of events to listen for",
+          "verification": "Webhook signature verification",
+          "processing": "How to handle incoming data"
+        },
+        "security": [
+          "Verify webhook signatures",
+          "Validate request origins",
+          "Rate limit webhook calls",
+          "Log all webhook activities"
+        ]
+      },
+      "database_tool": {
+        "name": "Database Query Tool",
+        "description": "Tool that queries databases safely",
+        "configuration_schema": {
+          "connection_string": "Database connection (use secrets)",
+          "query_templates": "Parameterized SQL templates",
+          "permissions": "Read/write permissions",
+          "timeout": "Query timeout settings"
+        },
+        "safety_features": [
+          "SQL injection prevention",
+          "Query whitelisting",
+          "Result set size limits",
+          "Transaction management"
+        ]
+      },
+      "custom_function_tool": {
+        "name": "Custom Function Tool",
+        "description": "Tool that executes custom business logic",
+        "configuration_schema": {
+          "function_code": "Sandboxed function implementation",
+          "input_schema": "Expected input parameters",
+          "output_schema": "Response format definition",
+          "dependencies": "Required libraries or services"
+        },
+        "execution_environment": [
+          "Sandboxed execution",
+          "Resource limits",
+          "Timeout controls",
+          "Error handling"
+        ]
+      }
+    }
+  },
+  "approval_patterns": {
+    "name": "Tool Approval Policy Patterns", 
+    "description": "Common patterns for configuring tool approval policies",
+    "policy_types": {
+      "always_ask": {
+        "name": "Always Ask for Approval",
+        "description": "Require human approval for every tool execution",
+        "use_cases": [
+          "High-security environments",
+          "Financial transactions",
+          "Data modification operations",
+          "External system integrations"
+        ],
+        "advantages": [
+          "Maximum security and control",
+          "Audit trail for all actions",
+          "Human oversight of all operations"
+        ],
+        "disadvantages": [
+          "Reduced automation efficiency",
+          "Increased response time",
+          "Higher operational overhead"
+        ]
+      },
+      "fine_grained": {
+        "name": "Fine-Grained Approval Rules",
+        "description": "Configure specific approval requirements per tool",
+        "rule_examples": {
+          "always_approve": [
+            "data_lookup tools",
+            "read-only operations",
+            "informational queries"
+          ],
+          "conditional_approval": [
+            "data updates (if amount < $100)",
+            "notifications (during business hours)",
+            "workflows (if user is authenticated)"
+          ],
+          "always_require_approval": [
+            "data deletion",
+            "financial transactions",
+            "system configuration changes"
+          ]
+        },
+        "configuration": {
+          "approval_mode": "conditional",
+          "conditions": {
+            "max_amount": 100,
+            "business_hours_only": true,
+            "authenticated_users_only": true
+          }
+        }
+      },
+      "no_approval": {
+        "name": "No Approval Required",
+        "description": "Allow unrestricted tool execution",
+        "use_cases": [
+          "Development and testing",
+          "Low-risk operations",
+          "Trusted internal systems",
+          "Read-only integrations"
+        ],
+        "safety_considerations": [
+          "Ensure tools are thoroughly tested",
+          "Implement comprehensive logging",
+          "Monitor for unusual activity",
+          "Have rollback procedures ready"
+        ]
+      }
+    }
+  },
+  "secrets_management_patterns": {
+    "name": "Secrets Management Patterns",
+    "description": "Best practices for secure credential and secret management",
+    "secret_types": {
+      "api_keys": {
+        "name": "API Keys and Tokens",
+        "description": "External service authentication tokens",
+        "examples": [
+          "OpenAI API key",
+          "Stripe API key", 
+          "Slack bot token",
+          "Database connection string"
+        ],
+        "best_practices": [
+          "Use environment variables for local development",
+          "Rotate keys regularly",
+          "Use least-privilege access",
+          "Monitor key usage"
+        ]
+      },
+      "database_credentials": {
+        "name": "Database Credentials",
+        "description": "Database connection parameters",
+        "components": [
+          "Connection string or individual parameters",
+          "Username and password",
+          "SSL certificates if required",
+          "Connection pool settings"
+        ],
+        "security": [
+          "Use dedicated service accounts",
+          "Limit database permissions",
+          "Enable SSL/TLS encryption",
+          "Implement connection timeouts"
+        ]
+      },
+      "webhook_secrets": {
+        "name": "Webhook Verification Secrets",
+        "description": "Secrets used to verify webhook authenticity",
+        "usage": [
+          "HMAC signature verification",
+          "Token-based authentication",
+          "IP whitelist validation",
+          "Timestamp verification"
+        ]
+      },
+      "oauth_credentials": {
+        "name": "OAuth Credentials",
+        "description": "OAuth client credentials and tokens",
+        "components": [
+          "Client ID and secret",
+          "Access and refresh tokens",
+          "Scope definitions",
+          "Redirect URIs"
+        ],
+        "lifecycle": [
+          "Initial authorization",
+          "Token refresh",
+          "Token expiration handling",
+          "Revocation procedures"
+        ]
+      }
+    }
+  }
+}

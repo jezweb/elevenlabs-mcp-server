@@ -1,0 +1,225 @@
+{
+  "customer_support_scenarios": {
+    "name": "Customer Support Test Scenarios",
+    "description": "Common customer support interaction patterns for testing",
+    "scenarios": {
+      "account_issues": {
+        "name": "Account-Related Problems",
+        "variations": [
+          {
+            "issue": "Login problems",
+            "user_input": "I can't log into my account",
+            "expected_flow": ["gather credentials info", "troubleshoot common issues", "escalate if needed"],
+            "success_metrics": ["issue identified", "solution provided or escalated", "user satisfaction"]
+          },
+          {
+            "issue": "Password reset",
+            "user_input": "I forgot my password",
+            "expected_flow": ["verify identity", "initiate reset process", "confirm completion"],
+            "success_metrics": ["identity verified", "reset initiated", "user guided through process"]
+          },
+          {
+            "issue": "Account suspension",
+            "user_input": "My account has been suspended",
+            "expected_flow": ["gather account info", "check suspension reason", "explain process"],
+            "success_metrics": ["reason explained", "next steps clear", "appropriate escalation"]
+          }
+        ]
+      },
+      "billing_inquiries": {
+        "name": "Billing and Payment Issues",
+        "variations": [
+          {
+            "issue": "Billing dispute",
+            "user_input": "I was charged incorrectly",
+            "expected_flow": ["gather charge details", "review billing", "initiate resolution"],
+            "success_metrics": ["details captured", "empathy shown", "resolution process started"]
+          },
+          {
+            "issue": "Payment method update",
+            "user_input": "I need to update my credit card",
+            "expected_flow": ["verify identity", "guide to payment section", "confirm update"],
+            "success_metrics": ["secure process", "clear instructions", "update confirmed"]
+          }
+        ]
+      },
+      "product_information": {
+        "name": "Product and Service Inquiries",
+        "variations": [
+          {
+            "issue": "Feature questions",
+            "user_input": "Does your product have X feature?",
+            "expected_flow": ["understand feature need", "provide accurate info", "suggest alternatives if needed"],
+            "success_metrics": ["accurate information", "need understood", "helpful suggestions"]
+          },
+          {
+            "issue": "Pricing inquiry",
+            "user_input": "What are your pricing plans?",
+            "expected_flow": ["understand use case", "present relevant plans", "highlight value"],
+            "success_metrics": ["relevant plans shown", "value explained", "next steps offered"]
+          }
+        ]
+      }
+    }
+  },
+  "technical_support_scenarios": {
+    "name": "Technical Support Test Scenarios",
+    "description": "Technical troubleshooting and support interaction patterns",
+    "scenarios": {
+      "connectivity_issues": {
+        "name": "Connection and Access Problems",
+        "variations": [
+          {
+            "issue": "API integration failure",
+            "user_input": "My API calls are returning errors",
+            "expected_flow": ["gather error details", "check API status", "provide troubleshooting steps"],
+            "success_metrics": ["error details captured", "systematic troubleshooting", "solution provided"]
+          },
+          {
+            "issue": "Webhook not working",
+            "user_input": "My webhooks stopped working",
+            "expected_flow": ["verify webhook config", "test connectivity", "identify issue"],
+            "success_metrics": ["config checked", "connectivity tested", "issue diagnosed"]
+          }
+        ]
+      },
+      "configuration_problems": {
+        "name": "Setup and Configuration Issues",
+        "variations": [
+          {
+            "issue": "Integration setup",
+            "user_input": "I'm having trouble setting up the integration",
+            "expected_flow": ["understand current setup", "identify gaps", "provide step-by-step guidance"],
+            "success_metrics": ["current state assessed", "gaps identified", "clear guidance provided"]
+          }
+        ]
+      }
+    }
+  },
+  "sales_scenarios": {
+    "name": "Sales and Lead Qualification Scenarios",
+    "description": "Sales conversation patterns for testing qualification and conversion",
+    "scenarios": {
+      "lead_qualification": {
+        "name": "Initial Lead Qualification",
+        "variations": [
+          {
+            "situation": "Enterprise inquiry",
+            "user_input": "We're looking for a solution for our team of 500 people",
+            "expected_flow": ["understand needs", "qualify budget", "identify decision makers", "schedule follow-up"],
+            "success_metrics": ["needs understood", "budget qualified", "decision process clear", "next step scheduled"]
+          },
+          {
+            "situation": "Small business inquiry", 
+            "user_input": "I have a small business and need help with customer service",
+            "expected_flow": ["understand business", "assess fit", "present relevant solutions", "guide to trial"],
+            "success_metrics": ["business understood", "solution match", "trial initiated"]
+          }
+        ]
+      },
+      "objection_handling": {
+        "name": "Common Sales Objections",
+        "variations": [
+          {
+            "objection": "Price concern",
+            "user_input": "This seems expensive compared to other options",
+            "expected_flow": ["acknowledge concern", "understand comparison", "highlight value", "explore options"],
+            "success_metrics": ["concern acknowledged", "value demonstrated", "alternatives explored"]
+          },
+          {
+            "objection": "Feature gap",
+            "user_input": "You don't have feature X that we need",
+            "expected_flow": ["understand feature need", "present alternatives", "explore workarounds", "capture feedback"],
+            "success_metrics": ["need understood", "alternatives presented", "feedback captured"]
+          }
+        ]
+      }
+    }
+  },
+  "edge_case_scenarios": {
+    "name": "Edge Cases and Error Handling",
+    "description": "Unusual situations and error conditions for robust testing",
+    "scenarios": {
+      "unclear_requests": {
+        "name": "Ambiguous or Unclear User Inputs",
+        "variations": [
+          {
+            "input": "It's not working",
+            "expected_response": "Ask clarifying questions to understand the issue",
+            "success_criteria": ["clarifying questions asked", "specific information gathered", "patience shown"]
+          },
+          {
+            "input": "Fix my thing",
+            "expected_response": "Politely request more specific information",
+            "success_criteria": ["polite request for details", "helpful prompting", "guided discovery"]
+          }
+        ]
+      },
+      "system_errors": {
+        "name": "System Error Handling",
+        "variations": [
+          {
+            "error": "Knowledge base unavailable",
+            "expected_behavior": "Graceful fallback with apology and alternative",
+            "success_criteria": ["error acknowledged", "alternative offered", "follow-up promised"]
+          },
+          {
+            "error": "External tool failure",
+            "expected_behavior": "Acknowledge limitation and offer manual alternative",
+            "success_criteria": ["limitation explained", "manual process offered", "issue escalated"]
+          }
+        ]
+      },
+      "frustrated_users": {
+        "name": "Escalated or Frustrated Users",
+        "variations": [
+          {
+            "situation": "Multiple previous attempts",
+            "user_input": "I've already tried that three times and it doesn't work!",
+            "expected_response": "Acknowledge frustration and take different approach",
+            "success_criteria": ["frustration acknowledged", "empathy shown", "new approach taken"]
+          },
+          {
+            "situation": "Urgent request",
+            "user_input": "This is urgent! I need this fixed immediately!",
+            "expected_response": "Acknowledge urgency and prioritize appropriately",
+            "success_criteria": ["urgency acknowledged", "expectations managed", "priority escalation"]
+          }
+        ]
+      }
+    }
+  },
+  "conversation_flow_scenarios": {
+    "name": "Conversation Flow and Transition Scenarios",
+    "description": "Testing smooth conversation transitions and flow management",
+    "scenarios": {
+      "topic_changes": {
+        "name": "Topic Transition Handling",
+        "variations": [
+          {
+            "flow": "Support to sales inquiry",
+            "transition": "User asks about pricing after support issue resolved",
+            "expected_handling": "Acknowledge transition and shift context appropriately",
+            "success_criteria": ["transition recognized", "context shifted", "appropriate resources engaged"]
+          },
+          {
+            "flow": "General to specific inquiry",
+            "transition": "User moves from general question to specific technical issue",
+            "expected_handling": "Follow user's lead while maintaining context",
+            "success_criteria": ["specificity recognized", "context maintained", "appropriate detail level"]
+          }
+        ]
+      },
+      "multi_issue_conversations": {
+        "name": "Multiple Issue Handling",
+        "variations": [
+          {
+            "situation": "User has two unrelated problems",
+            "expected_handling": "Address issues systematically without confusion",
+            "success_criteria": ["issues separated", "systematic approach", "no cross-contamination"]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "rating_systems": {
+    "name": "Feedback Rating Systems",
+    "description": "Different approaches to collecting conversation ratings and feedback",
+    "systems": {
+      "five_point_scale": {
+        "name": "5-Point Likert Scale",
+        "description": "Traditional 1-5 rating system with descriptive anchors",
+        "scale": {
+          "1": {
+            "label": "Poor",
+            "description": "Major issues, failed interaction",
+            "follow_up_required": true
+          },
+          "2": {
+            "label": "Below Average", 
+            "description": "Some problems, partially successful",
+            "follow_up_recommended": true
+          },
+          "3": {
+            "label": "Average",
+            "description": "Acceptable, met basic needs",
+            "follow_up_optional": true
+          },
+          "4": {
+            "label": "Good",
+            "description": "Effective interaction, minor issues only",
+            "follow_up_optional": false
+          },
+          "5": {
+            "label": "Excellent", 
+            "description": "Perfect interaction, exceeded expectations",
+            "follow_up_optional": false
+          }
+        },
+        "benefits": ["familiar to users", "easy to analyze", "industry standard"],
+        "use_cases": ["general satisfaction", "performance measurement", "benchmarking"]
+      },
+      "thumbs_rating": {
+        "name": "Binary Thumbs Up/Down",
+        "description": "Simple positive/negative feedback system",
+        "options": {
+          "thumbs_up": {
+            "label": "Thumbs Up",
+            "description": "Helpful/Satisfied",
+            "value": 1
+          },
+          "thumbs_down": {
+            "label": "Thumbs Down",
+            "description": "Not Helpful/Unsatisfied", 
+            "value": 0,
+            "requires_follow_up": true
+          }
+        },
+        "benefits": ["quick to complete", "high response rate", "clear sentiment"],
+        "use_cases": ["quick feedback", "high-volume interactions", "mobile interfaces"]
+      },
+      "nps_style": {
+        "name": "Net Promoter Score Style",
+        "description": "0-10 scale measuring likelihood to recommend",
+        "scale": "0-10",
+        "categories": {
+          "detractors": {
+            "range": "0-6",
+            "description": "Unlikely to recommend, may speak negatively"
+          },
+          "passives": {
+            "range": "7-8", 
+            "description": "Satisfied but not enthusiastic"
+          },
+          "promoters": {
+            "range": "9-10",
+            "description": "Highly satisfied, likely to recommend"
+          }
+        },
+        "benefits": ["industry benchmark", "predictive of loyalty", "comprehensive metric"],
+        "use_cases": ["customer loyalty", "service quality", "competitive analysis"]
+      }
+    }
+  },
+  "feedback_categories": {
+    "name": "Feedback Classification Categories",
+    "description": "Structured categories for organizing and analyzing feedback",
+    "categories": {
+      "agent_performance": {
+        "subcategories": {
+          "knowledge": "Agent's subject matter expertise",
+          "communication": "Clarity and effectiveness of communication",
+          "professionalism": "Professional demeanor and conduct",
+          "problem_solving": "Ability to resolve issues effectively",
+          "empathy": "Understanding and relating to user needs"
+        }
+      },
+      "system_performance": {
+        "subcategories": {
+          "response_time": "Speed of agent responses",
+          "availability": "System uptime and accessibility",
+          "audio_quality": "Clarity of voice/audio",
+          "connection_stability": "Reliability of connection",
+          "user_interface": "Ease of use of interface"
+        }
+      },
+      "outcome_satisfaction": {
+        "subcategories": {
+          "issue_resolution": "Whether problem was solved",
+          "information_completeness": "Adequacy of information provided",
+          "next_steps_clarity": "Clear understanding of what happens next",
+          "follow_up_needs": "Whether additional contact is needed",
+          "overall_experience": "General satisfaction with interaction"
+        }
+      }
+    }
+  },
+  "feedback_prompts": {
+    "name": "Feedback Collection Prompts",
+    "description": "Pre-written prompts for gathering specific types of feedback",
+    "prompts": {
+      "post_conversation": {
+        "immediate": [
+          "How satisfied were you with this conversation?",
+          "Did the agent understand your request clearly?",
+          "Was your issue resolved to your satisfaction?",
+          "How likely are you to recommend our service?"
+        ],
+        "follow_up": [
+          "Looking back, how well did our agent help you?",
+          "Is there anything else you wish the agent had addressed?",
+          "How could we improve this type of interaction?"
+        ]
+      },
+      "specific_aspects": {
+        "agent_knowledge": [
+          "How knowledgeable was the agent about your topic?",
+          "Did the agent provide accurate information?",
+          "Were you confident in the agent's expertise?"
+        ],
+        "communication": [
+          "How clear were the agent's explanations?",
+          "Did the agent communicate in a way you could understand?",
+          "How professional was the agent's communication?"
+        ],
+        "resolution": [
+          "How effectively was your issue resolved?",
+          "Are you satisfied with the solution provided?",
+          "Do you feel confident about the next steps?"
+        ]
+      },
+      "improvement_focused": [
+        "What could we have done better in this conversation?",
+        "What additional information would have been helpful?",
+        "How could we improve the agent's performance?",
+        "What would make this type of interaction more effective?"
+      ]
+    }
+  },
+  "feedback_analysis": {
+    "name": "Feedback Analysis Framework", 
+    "description": "Methods for analyzing and acting on conversation feedback",
+    "analysis_types": {
+      "quantitative": {
+        "metrics": {
+          "average_rating": "Mean satisfaction score across conversations",
+          "rating_distribution": "Breakdown of ratings by score",
+          "response_rate": "Percentage of users providing feedback",
+          "trend_analysis": "Changes in ratings over time"
+        }
+      },
+      "qualitative": {
+        "methods": {
+          "theme_identification": "Common topics in open-ended feedback",
+          "sentiment_analysis": "Emotional tone of feedback comments",
+          "keyword_frequency": "Most mentioned words/phrases",
+          "improvement_suggestions": "Categorized user suggestions"
+        }
+      },
+      "actionable_insights": {
+        "agent_coaching": "Specific areas for agent improvement",
+        "system_enhancements": "Technical improvements needed",
+        "process_optimization": "Workflow and procedure adjustments",
+        "training_needs": "Knowledge gaps to address"
+      }
+    }
+  },
+  "feedback_automation": {
+    "name": "Automated Feedback Processing",
+    "description": "Templates for automated feedback collection and analysis",
+    "automation_types": {
+      "trigger_based": {
+        "conversation_end": "Automatic feedback request at conversation completion",
+        "low_rating_follow_up": "Immediate escalation for ratings below threshold",
+        "positive_feedback_capture": "Testimonial collection for high ratings"
+      },
+      "scheduled": {
+        "daily_summary": "Aggregate feedback metrics daily",
+        "weekly_reports": "Comprehensive feedback analysis weekly",
+        "monthly_trends": "Long-term trend analysis monthly"
+      },
+      "threshold_alerts": {
+        "satisfaction_drop": "Alert when satisfaction falls below threshold",
+        "volume_spike": "Alert for unusual feedback volume changes", 
+        "negative_pattern": "Alert for clusters of negative feedback"
+      }
+    }
+  }
+}
