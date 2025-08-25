@@ -103,12 +103,23 @@ mcp = FastMCP(
 # ============================================================
 
 def load_resource(filename: str) -> Dict[str, Any]:
-    """Load a JSON resource file."""
+    """Load a JSON resource file with proper error handling."""
     resource_path = Path(__file__).parent / "resources" / filename
-    if resource_path.exists():
-        with open(resource_path, 'r') as f:
-            return json.load(f)
-    return {}
+    try:
+        if not resource_path.exists():
+            logger.error(f"Resource file not found: {resource_path}")
+            return {}
+        
+        with open(resource_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            logger.info(f"Successfully loaded {filename}: {len(data)} items")
+            return data
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON parsing error in {filename}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"Error loading resource {filename}: {e}")
+        return {}
 
 # Load templates at module level for efficiency
 PROMPT_TEMPLATES = load_resource("prompt_templates.json")
@@ -335,19 +346,49 @@ async def calculate_llm_usage_tool(
 # Resources
 # ============================================================
 
-@mcp.resource("templates://agent-templates")
-async def get_templates_resource() -> str:
-    """Get all agent templates as a resource."""
+@mcp.resource(
+    "resource://agent-templates",
+    name="ElevenLabs Agent Templates",
+    description="Complete agent configurations for common use cases like customer support, sales, and technical assistance. Each template includes system prompts, voice settings, and recommended configurations.",
+    mime_type="application/json",
+    tags={"templates", "agents", "configurations"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_agent_templates_resource() -> str:
+    """Get all agent templates as a JSON resource."""
     return json.dumps(AGENT_TEMPLATES, indent=2)
 
-@mcp.resource("templates://prompt-templates")
-async def get_prompts_resource() -> str:
-    """Get all prompt templates as a resource."""
+@mcp.resource(
+    "resource://prompt-templates", 
+    name="ElevenLabs Prompt Templates",
+    description="Ready-to-use system prompts for different agent types including customer support, sales qualification, technical support, and appointment booking. Optimized for conversational AI.",
+    mime_type="application/json",
+    tags={"templates", "prompts", "system_prompts"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_prompt_templates_resource() -> str:
+    """Get all prompt templates as a JSON resource."""
     return json.dumps(PROMPT_TEMPLATES, indent=2)
 
-@mcp.resource("templates://voice-presets")
-async def get_voices_resource() -> str:
-    """Get all voice presets as a resource."""
+@mcp.resource(
+    "resource://voice-presets",
+    name="ElevenLabs Voice Presets", 
+    description="Voice configuration presets with different personality types: professional, friendly, energetic, calm, and more. Each preset includes voice ID, stability, similarity boost, and speed settings.",
+    mime_type="application/json",
+    tags={"templates", "voices", "presets", "audio"},
+    annotations={
+        "readOnlyHint": True,
+        "idempotentHint": True
+    }
+)
+async def get_voice_presets_resource() -> str:
+    """Get all voice presets as a JSON resource."""
     return json.dumps(VOICE_PRESETS, indent=2)
 
 # ============================================================
