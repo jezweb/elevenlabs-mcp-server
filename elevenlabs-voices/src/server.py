@@ -32,7 +32,19 @@ logger = logging.getLogger(__name__)
 # Initialize FastMCP server
 mcp = FastMCP(
     name="elevenlabs-voices",
-    description="ElevenLabs voice resource management - voice CRUD, cloning, library, and configuration"
+    instructions="""ElevenLabs Voices MCP Server - Voice resource management.
+
+This server provides tools for:
+- Voice CRUD operations (create, read, update, delete)
+- Text-to-Voice design and generation
+- Instant Voice Cloning (IVC) from audio samples
+- Voice library search and management
+- Voice settings and configuration
+
+Voice Settings Guide:
+- Stability (0.0-1.0): 0.3=expressive, 0.7=balanced, 0.9=consistent
+- Similarity Boost (0.0-1.0): 0.5=creative, 0.8=natural, 1.0=strict
+- Style (0.0-1.0): 0.0=natural, 0.5=enhanced, 1.0=exaggerated"""
 )
 
 # Import all tools - using absolute imports for FastMCP compatibility
