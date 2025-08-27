@@ -17,7 +17,7 @@ from .ivc_tools import instant_voice_clone
 from .voice_library import search_voice_library, add_shared_voice, get_shared_voices
 
 # Voice settings imports
-from .voice_settings import voice_settings, get_voice_settings
+from .voice_settings import get_voice_settings
 
 __all__ = [
     # Voice management
@@ -38,6 +38,5 @@ __all__ = [
     "get_shared_voices",
     
     # Voice settings
-    "voice_settings",
     "get_voice_settings"
 ]

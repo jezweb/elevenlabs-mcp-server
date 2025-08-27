@@ -67,7 +67,7 @@ async def text_to_voice(
     Returns:
         Generated voice previews with IDs for creation
         
-    API Endpoint: POST /text-to-voice
+    API Endpoint: POST /text-to-voice/create-previews
     
     Examples:
         text_to_voice("A calm, professional female voice")
@@ -83,18 +83,19 @@ async def text_to_voice(
     
     try:
         client = ElevenLabsClient()
-        payload = {"text": description}
+        payload = {"voice_description": description}
         
         # Add custom text if provided
         if text and text.strip():
             payload["text"] = text.strip()
         
-        result = await client._request("POST", "/text-to-voice", json_data=payload)
+        result = await client._request("POST", "/text-to-voice/create-previews", json_data=payload)
         
         # Extract generated voice information
-        generated_voices = result.get("generated_voices", [])
+        # The API returns "previews" array, not "generated_voices"
+        previews_data = result.get("previews", [])
         
-        if not generated_voices:
+        if not previews_data:
             return format_error(
                 "No voice previews generated",
                 "Try a different description or check your API tier permissions"
@@ -102,7 +103,7 @@ async def text_to_voice(
         
         # Format the response with preview information
         previews = []
-        for i, voice in enumerate(generated_voices):
+        for i, voice in enumerate(previews_data):
             preview = {
                 "preview_number": i + 1,
                 "generated_voice_id": voice.get("generated_voice_id"),
@@ -155,7 +156,7 @@ async def create_voice_from_preview(
     Returns:
         Created voice details
         
-    API Endpoint: POST /text-to-voice/create-voice
+    API Endpoint: POST /text-to-voice/create-voice-from-preview
     
     Examples:
         create_voice_from_preview("abc123def456", "Sarah Professional", "Calm business voice")
@@ -188,11 +189,11 @@ async def create_voice_from_preview(
         client = ElevenLabsClient()
         payload = {
             "generated_voice_id": generated_voice_id,
-            "name": name,
-            "description": description
+            "voice_name": name,
+            "voice_description": description
         }
         
-        result = await client._request("POST", "/text-to-voice/create-voice", json_data=payload)
+        result = await client._request("POST", "/text-to-voice/create-voice-from-preview", json_data=payload)
         
         # Extract and format voice information
         voice_info = extract_voice_info(result)

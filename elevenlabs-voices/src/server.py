@@ -63,7 +63,6 @@ from tools import (
     add_shared_voice,
     get_shared_voices,
     # Voice settings tools
-    voice_settings,
     get_voice_settings
 )
 
@@ -214,29 +213,6 @@ async def get_public_voices() -> Dict[str, Any]:
     return await get_shared_voices()
 
 # Voice Settings Tools  
-@mcp.tool()
-async def configure_voice_settings(
-    voice_id: str,
-    stability: Optional[float] = None,
-    similarity_boost: Optional[float] = None,
-    style: Optional[float] = None,
-    use_speaker_boost: Optional[bool] = None
-) -> Dict[str, Any]:
-    """
-    Configure voice generation settings.
-    
-    Args:
-        voice_id: Voice to configure
-        stability: Voice stability (0.0-1.0)
-        similarity_boost: Similarity to original (0.0-1.0) 
-        style: Style exaggeration (0.0-1.0)
-        use_speaker_boost: Enable speaker boost
-        
-    Returns:
-        Updated voice settings
-    """
-    return await voice_settings(voice_id, stability, similarity_boost, style, use_speaker_boost)
-
 @mcp.tool()
 async def get_voice_configuration(voice_id: str) -> Dict[str, Any]:
     """
