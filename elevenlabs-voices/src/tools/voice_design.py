@@ -85,9 +85,12 @@ async def text_to_voice(
         client = ElevenLabsClient()
         payload = {"voice_description": description}
         
-        # Add custom text if provided
+        # Add custom text if provided, otherwise auto-generate
         if text and text.strip():
             payload["text"] = text.strip()
+        else:
+            # Auto-generate text if none provided
+            payload["auto_generate_text"] = True
         
         # Try new endpoint first, fall back to legacy if needed
         result = None
@@ -121,12 +124,16 @@ async def text_to_voice(
             )
         
         # Format the response with preview information
+        # Note: Omitting audio_base_64 to avoid token limits in MCP
         previews = []
         for i, voice in enumerate(previews_data):
             preview = {
                 "preview_number": i + 1,
                 "generated_voice_id": voice.get("generated_voice_id"),
-                "audio_base_64": voice.get("audio_base_64"),
+                # Omit audio_base_64 to prevent token overflow in MCP
+                # Could save to file: f"voice_preview_{voice.get('generated_voice_id')}.mp3"
+                "has_audio": bool(voice.get("audio_base_64")),
+                "audio_size_bytes": len(voice.get("audio_base_64", "")) if voice.get("audio_base_64") else 0,
                 "description": description
             }
             previews.append(preview)
