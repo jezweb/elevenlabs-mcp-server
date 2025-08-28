@@ -220,7 +220,7 @@ async def create_voice_from_preview(
             "voice_description": description
         }
         
-        result = await client._request("POST", "/text-to-voice/create", json_data=payload)
+        result = await client._request("POST", "/text-to-voice", json_data=payload)
         
         # Extract and format voice information
         voice_info = extract_voice_info(result)
