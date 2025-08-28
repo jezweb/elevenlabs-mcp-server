@@ -89,7 +89,7 @@ async def text_to_voice(
         if text and text.strip():
             payload["text"] = text.strip()
         
-        result = await client._request("POST", "/text-to-voice/create-previews", json_data=payload)
+        result = await client._request("POST", "/text-to-voice/design", json_data=payload)
         
         # Extract generated voice information
         # The API returns "previews" array, not "generated_voices"
@@ -193,7 +193,7 @@ async def create_voice_from_preview(
             "voice_description": description
         }
         
-        result = await client._request("POST", "/text-to-voice/create-voice-from-preview", json_data=payload)
+        result = await client._request("POST", "/text-to-voice/create", json_data=payload)
         
         # Extract and format voice information
         voice_info = extract_voice_info(result)
