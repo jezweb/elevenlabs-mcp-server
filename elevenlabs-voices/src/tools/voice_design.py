@@ -89,10 +89,29 @@ async def text_to_voice(
         if text and text.strip():
             payload["text"] = text.strip()
         
-        result = await client._request("POST", "/text-to-voice/design", json_data=payload)
+        # Try new endpoint first, fall back to legacy if needed
+        result = None
+        endpoint_used = None
+        
+        try:
+            # Try the new endpoint first
+            result = await client._request("POST", "/text-to-voice/design", json_data=payload)
+            endpoint_used = "new"
+        except Exception as e:
+            error_msg = str(e)
+            # If new endpoint fails with 422 or 404, try legacy endpoint
+            if "422" in error_msg or "404" in error_msg or "voice_name" in error_msg:
+                try:
+                    result = await client._request("POST", "/text-to-voice/create-previews", json_data=payload)
+                    endpoint_used = "legacy"
+                except Exception as legacy_e:
+                    # If both fail, raise the original error
+                    raise e
+            else:
+                raise e
         
         # Extract generated voice information
-        # The API returns "previews" array, not "generated_voices"
+        # The API returns "previews" array
         previews_data = result.get("previews", [])
         
         if not previews_data:
@@ -118,6 +137,7 @@ async def text_to_voice(
                 "description": description,
                 "preview_count": len(previews),
                 "previews": previews,
+                "endpoint_used": endpoint_used,
                 "next_step": "Use create_voice_from_preview() with a generated_voice_id to make permanent"
             }
         )
