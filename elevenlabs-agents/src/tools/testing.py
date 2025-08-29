@@ -31,7 +31,7 @@ async def simulate_conversation(
     
     Note: This creates a test conversation to validate agent behavior.
     
-    API Endpoint: POST /convai/convai/simulations
+    API Endpoint: POST /convai/agents/{agent_id}/simulate-conversation
     """
     if not validate_elevenlabs_id(agent_id, 'agent'):
         return format_error("Invalid agent ID format")
@@ -42,9 +42,8 @@ async def simulate_conversation(
     try:
         result = await client._request(
             "POST",
-            "/convai/convai/simulations",
+            f"/convai/agents/{agent_id}/simulate-conversation",
             json_data={
-                "agent_id": agent_id,
                 "simulation_specification": {
                     "num_conversations": 1,
                     "conversation_specification": {
