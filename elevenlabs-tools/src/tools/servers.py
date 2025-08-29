@@ -12,40 +12,45 @@ logger = logging.getLogger(__name__)
 
 async def create_mcp_server(
     client,
-    agent_id: str,
     server_url: str,
-    server_type: Literal["SSE", "HTTP"] = "SSE",
-    name: Optional[str] = None,
+    name: str,
+    transport: Literal["SSE", "HTTP"] = "SSE",
     description: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Add MCP server integration.
+    Create MCP server integration.
     
     Args:
-        agent_id: Agent to add server to
         server_url: MCP server URL
-        server_type: Transport type (SSE or HTTP)
-        name: Server name
+        name: Server name (required)
+        transport: Transport type (SSE or HTTP)
         description: Server description
     
     Returns:
         Integration configuration
     """
-    from src.utils import format_error, format_success, validate_elevenlabs_id, validate_url
+    from src.utils import format_error, format_success, validate_url
     
     try:
-        if not validate_elevenlabs_id(agent_id, 'agent'):
-            return format_error("Invalid agent ID format", "Use format: agent_XXXX")
-        
         if not validate_url(server_url):
             return format_error("Invalid server URL")
         
-        data = {
-            "agent_id": agent_id,
+        if not name:
+            return format_error("Server name is required")
+        
+        # Build config object as per API spec
+        config = {
             "url": server_url,
-            "type": server_type,
             "name": name,
-            "description": description
+            "transport": transport
+        }
+        
+        if description:
+            config["description"] = description
+        
+        # Wrap in config object
+        data = {
+            "config": config
         }
         
         result = await client._request(
@@ -55,7 +60,7 @@ async def create_mcp_server(
         )
         
         return format_success(
-            f"Added MCP server to agent {agent_id}",
+            f"Created MCP server '{name}'",
             {"server": result}
         )
         
