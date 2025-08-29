@@ -185,28 +185,93 @@ async def create_test_tool(
     Create a new test scenario for agent validation.
     
     Args:
-        name: Test name (descriptive, e.g., "Customer greeting flow")
-        agent_id: Agent to test (format: agent_XXXX)
-        test_type: Type of test
-            - "conversation": Test dialogue flows
-            - "tool": Test tool/function calls
-            - "integration": Test external integrations
-        scenarios: Test conversation flows (list of interaction steps)
-        expectations: Expected outcomes (response patterns, behaviors)
-        metadata: Additional metadata (tags, priority, etc.)
+        name: Test name (str, descriptive)
+            Example: "Customer greeting flow"
+            
+        agent_id: Agent to test (str, format: agent_XXXX)
+            Example: "agent_8601k3tv9x6nf6trr3zw31mgtpre"
+            
+        test_type: Type of test (str, default: "conversation")
+            Options: "conversation", "tool", "integration"
+            
+        scenarios: Test conversation flows (Optional[List[Dict]])
+            IMPORTANT: Pass as a list of dictionaries, NOT a JSON string!
+            
+            ✓ CORRECT: scenarios=[{"input": "Hello", "expected": "greeting"}]
+            ✗ WRONG:   scenarios='[{"input": "Hello"}]'  # Don't pass as string
+            
+            Scenario dict structure:
+            - input: User message (str) - what the user says
+            - expected: Expected response type (str) - e.g., "tool_usage", "greeting"
+            - notes: Test notes (str, optional) - explanation of expectation
+            - role: Speaker role (str, optional) - defaults to "user"
+            
+            Examples:
+                [{"input": "Hi", "expected": "greeting"}]
+                [
+                    {"input": "Book a haircut", "expected": "tool_usage", 
+                     "notes": "Should use list_appointments"},
+                    {"input": "2pm please", "expected": "booking_confirmation"}
+                ]
+                
+        expectations: Expected outcomes (Optional[Dict[str, Any]])
+            IMPORTANT: Pass as a dictionary, NOT a JSON string!
+            
+            ✓ CORRECT: expectations={"must_use_tools": ["list_appointments"]}
+            ✗ WRONG:   expectations='{"must_use_tools": []}'  # Don't pass as string
+            
+            Common keys:
+            - must_use_tools: List[str] - tools that must be called
+            - conversation_quality: str - e.g., "natural_flow", "professional"
+            - privacy_compliance: bool - whether to check privacy
+            - success_condition: str - custom success evaluation prompt
+            
+            Examples:
+                {"must_use_tools": ["list_appointments", "create_client"]}
+                {"conversation_quality": "natural_flow", "privacy_compliance": true}
+                
+        metadata: Additional metadata (Optional[Dict])
+            IMPORTANT: Pass as a dictionary, NOT a JSON string!
+            
+            ✓ CORRECT: metadata={"category": "booking", "priority": "high"}
+            ✗ WRONG:   metadata='{"category": "booking"}'  # Don't pass as string
+            
+            Common keys:
+            - category: Test category (str)
+            - priority: Test priority (str) - "high", "medium", "low"
+            - tags: List of tags (List[str])
+            - description: Detailed description (str)
     
     Returns:
-        Created test with ID and configuration
+        Dict with created test details and test_id
     
-    Examples:
-        create_test(
-            "Greeting Test",
-            "agent_abc123",
-            "conversation",
-            scenarios=[{"input": "Hello", "expected": "greeting"}]
+    Usage Examples:
+        # Simple test
+        create_test_tool(
+            name="Greeting Test",
+            agent_id="agent_abc123"
+        )
+        
+        # Complex test with scenarios and expectations (CORRECT way)
+        create_test_tool(
+            name="Booking Flow Test",
+            agent_id="agent_xyz789",
+            test_type="tool",
+            scenarios=[  # List of dicts, not JSON string!
+                {"input": "Book appointment", "expected": "tool_usage"},
+                {"input": "Tomorrow 2pm", "expected": "confirmation"}
+            ],
+            expectations={  # Dict, not JSON string!
+                "must_use_tools": ["list_appointments", "create_booking"],
+                "conversation_quality": "professional"
+            },
+            metadata={  # Dict, not JSON string!
+                "category": "booking",
+                "priority": "high"
+            }
         )
     
-    API Endpoint: POST /convai/tests
+    API Endpoint: POST /convai/agent-testing/create
     """
     return await create_test(client, name, agent_id, test_type, scenarios, expectations, metadata)
 
@@ -223,23 +288,77 @@ async def update_test_tool(
     Update existing test scenario configuration.
     
     Args:
-        test_id: Test to update (format: test_XXXX)
-        name: New test name (optional)
-        scenarios: Updated test flows (optional)
-        expectations: Updated expected outcomes (optional)
-        metadata: Updated metadata (optional)
+        test_id: Test to update (str, format: test_XXXX)
+            Example: "test_abc123def456"
+            
+        name: New test name (Optional[str])
+            Example: "Updated Booking Flow Test"
+            
+        scenarios: Updated test flows (Optional[List[Dict]])
+            IMPORTANT: Pass as a list of dictionaries, NOT a JSON string!
+            
+            ✓ CORRECT: scenarios=[{"input": "Hi", "expected": "greeting"}]
+            ✗ WRONG:   scenarios='[{"input": "Hi"}]'  # Don't pass as string
+            
+            Same structure as create_test_tool:
+            - input: User message (str)
+            - expected: Expected response type (str)
+            - notes: Test notes (str, optional)
+            
+            Example:
+                [
+                    {"input": "Update my booking", "expected": "tool_usage"},
+                    {"input": "Change to 3pm", "expected": "confirmation"}
+                ]
+                
+        expectations: Updated expected outcomes (Optional[Dict])
+            IMPORTANT: Pass as a dictionary, NOT a JSON string!
+            
+            ✓ CORRECT: expectations={"must_use_tools": ["update_booking"]}
+            ✗ WRONG:   expectations='{"must_use_tools": []}'  # Don't pass as string
+            
+            Same keys as create_test_tool:
+            - must_use_tools: List[str]
+            - conversation_quality: str
+            - privacy_compliance: bool
+            - success_condition: str
+            
+        metadata: Updated metadata (Optional[Dict])
+            IMPORTANT: Pass as a dictionary, NOT a JSON string!
+            
+            ✓ CORRECT: metadata={"priority": "urgent"}
+            ✗ WRONG:   metadata='{"priority": "urgent"}'  # Don't pass as string
+            
+            Same keys as create_test_tool:
+            - category: str
+            - priority: str
+            - tags: List[str]
+            - description: str
     
     Returns:
-        Updated test configuration
+        Dict with updated test configuration
     
-    Examples:
-        update_test("test_abc123", name="Updated Greeting Test")
-        update_test(
-            "test_xyz789",
-            scenarios=[{"input": "Hi", "expected": "greeting"}]
+    Usage Examples:
+        # Update just the name
+        update_test_tool(
+            test_id="test_abc123",
+            name="Updated Greeting Test"
+        )
+        
+        # Update scenarios and expectations (CORRECT way)
+        update_test_tool(
+            test_id="test_xyz789",
+            scenarios=[  # List of dicts, not JSON string!
+                {"input": "Hi", "expected": "greeting"},
+                {"input": "Help me book", "expected": "tool_usage"}
+            ],
+            expectations={  # Dict, not JSON string!
+                "must_use_tools": ["list_appointments"],
+                "conversation_quality": "friendly"
+            }
         )
     
-    API Endpoint: PUT /convai/tests/{test_id}
+    API Endpoint: PUT /convai/agent-testing/{test_id}
     
     Note: Only provided fields are updated. Omitted fields remain unchanged.
     """
@@ -277,10 +396,22 @@ async def get_test_summaries_tool(
     Get batch test summaries.
     
     Args:
-        test_ids: List of test IDs
+        test_ids: List of test IDs (List[str])
+            IMPORTANT: Pass as a Python list, NOT a JSON string!
+            
+            ✓ CORRECT: test_ids=["test_abc123", "test_xyz789"]
+            ✗ WRONG:   test_ids='["test_abc123", "test_xyz789"]'  # Don't pass as string
+            
+            Example:
+                ["test_abc123", "test_def456", "test_ghi789"]
     
     Returns:
-        Summary statistics for tests
+        Dict with summary statistics for all specified tests
+        
+    Usage Example:
+        get_test_summaries_tool(
+            test_ids=["test_001", "test_002", "test_003"]  # List, not string!
+        )
     """
     return await get_test_summaries(client, test_ids)
 
@@ -300,24 +431,51 @@ async def run_tests_on_agent_tool(
     Execute comprehensive test suite on an agent.
     
     Args:
-        agent_id: Agent to test (format: agent_XXXX)
-        test_ids: Specific tests to run (optional list)
-        test_type: Filter by type ("conversation", "tool", "integration")
-        parallel: Run tests concurrently (default: False)
+        agent_id: Agent to test (str, format: agent_XXXX)
+            Example: "agent_8601k3tv9x6nf6trr3zw31mgtpre"
+            
+        test_ids: Specific tests to run (Optional[List[str]])
+            IMPORTANT: Pass as a Python list, NOT a JSON string!
+            
+            ✓ CORRECT: test_ids=["test_001", "test_002"]
+            ✗ WRONG:   test_ids='["test_001", "test_002"]'  # Don't pass as string
+            
+            Example:
+                ["test_abc123", "test_def456"]
+                
+        test_type: Filter by type (Optional[str])
+            Options: "conversation", "tool", "integration"
+            Example: "conversation"
+            
+        parallel: Run tests concurrently (bool, default: False)
             - False: Sequential execution, easier debugging
             - True: Parallel execution, faster but may hit rate limits
     
     Returns:
-        Test execution results with invocation ID for tracking
+        Dict with test execution results and invocation_id for tracking
     
-    Examples:
-        run_tests_on_agent("agent_abc123")  # Run all tests
-        run_tests_on_agent("agent_xyz789", test_ids=["test_001", "test_002"])
-        run_tests_on_agent("agent_def456", test_type="conversation", parallel=True)
+    Usage Examples:
+        # Run all tests for an agent
+        run_tests_on_agent_tool(
+            agent_id="agent_abc123"
+        )
+        
+        # Run specific tests (CORRECT way)
+        run_tests_on_agent_tool(
+            agent_id="agent_xyz789",
+            test_ids=["test_001", "test_002"]  # List, not string!
+        )
+        
+        # Run tests by type with parallel execution
+        run_tests_on_agent_tool(
+            agent_id="agent_def456",
+            test_type="conversation",
+            parallel=True
+        )
     
     API Endpoint: POST /convai/agents/{agent_id}/run-tests
     
-    Note: Use get_test_invocation() with returned invocation_id to check results.
+    Note: Use get_test_invocation_tool() with returned invocation_id to check results.
     """
     return await run_tests_on_agent(client, agent_id, test_ids, test_type, parallel)
 
@@ -385,20 +543,47 @@ async def simulate_conversation_tool(
     
     Args:
         agent_id: Agent to test (format: agent_XXXX)
-        user_message: Initial user input to start conversation
-        context: Conversation context/variables (optional)
-            - user_name, location, preferences, etc.
-        max_turns: Maximum conversation turns (1-50, default: 10)
+            Example: "agent_8601k3tv9x6nf6trr3zw31mgtpre"
+            
+        user_message: Initial user input to start conversation (string)
+            Example: "Hi, I'd like to book a haircut for tomorrow"
+            
+        context: Conversation context/variables (Optional[Dict[str, Any]])
+            IMPORTANT: Pass as a Python dictionary, NOT a JSON string!
+            
+            ✓ CORRECT: context={"location": "Dublin", "time": "afternoon"}
+            ✗ WRONG:   context='{"location": "Dublin"}'  # Don't pass as string
+            
+            Common context keys:
+            - location: User's location (str) - e.g., "Dublin", "NYC"
+            - time: Time context (str) - e.g., "morning", "afternoon", "evening"
+            - user_name: User's name (str) - e.g., "John", "Sarah"
+            - service: Service type (str) - e.g., "haircut", "booking"
+            - preferences: User preferences (dict) - e.g., {"style": "modern"}
+            
+            Examples:
+                {"location": "NYC", "time": "evening"}
+                {"user_name": "John", "preference": "quiet"}
+                {"service": "haircut", "day": "tomorrow"}
+                
+        max_turns: Maximum conversation turns (int, 1-50, default: 10)
+            Example: 10
     
     Returns:
-        Complete simulated conversation with analysis
+        Dict containing simulated conversation with analysis
     
-    Examples:
-        simulate_conversation("agent_abc123", "Hello, I need help")
-        simulate_conversation(
-            "agent_xyz789",
-            "I want to order pizza",
-            context={"location": "NYC", "time": "evening"},
+    Usage Examples:
+        # Simple simulation
+        simulate_conversation_tool(
+            agent_id="agent_abc123",
+            user_message="Hello, I need help"
+        )
+        
+        # With context (CORRECT way)
+        simulate_conversation_tool(
+            agent_id="agent_xyz789",
+            user_message="I want to order pizza",
+            context={"location": "NYC", "time": "evening"},  # Dict, not string!
             max_turns=20
         )
     
