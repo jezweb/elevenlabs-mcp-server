@@ -33,7 +33,7 @@ async def update_approval_policy(
         
         result = await client._request(
             "PATCH",
-            f"/convai/mcp/servers/{server_id}/approval-policy",
+            f"/convai/mcp-servers/{server_id}/approval-policy",
             json_data={"policy": policy}
         )
         
@@ -80,7 +80,7 @@ async def create_tool_approval(
         
         result = await client._request(
             "POST",
-            f"/convai/mcp/servers/{server_id}/tool-approvals",
+            f"/convai/mcp-servers/{server_id}/tool-approvals",
             json_data=data
         )
         
@@ -117,7 +117,7 @@ async def delete_tool_approval(
         
         await client._request(
             "DELETE",
-            f"/convai/mcp/servers/{server_id}/tool-approvals/{approval_id}"
+            f"/convai/mcp-servers/{server_id}/tool-approvals/{approval_id}"
         )
         
         return format_success(

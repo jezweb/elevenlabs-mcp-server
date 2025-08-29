@@ -50,7 +50,7 @@ async def create_mcp_server(
         
         result = await client._request(
             "POST",
-            "/convai/mcp/servers",
+            "/convai/mcp-servers",
             json_data=data
         )
         
@@ -85,7 +85,7 @@ async def get_mcp_server(
         
         result = await client._request(
             "GET",
-            f"/convai/mcp/servers/{server_id}",
+            f"/convai/mcp-servers/{server_id}",
             use_cache=True
         )
         
@@ -120,7 +120,7 @@ async def list_mcp_server_tools(
         
         result = await client._request(
             "GET",
-            f"/convai/mcp/servers/{server_id}/tools",
+            f"/convai/mcp-servers/{server_id}/tools",
             use_cache=True
         )
         
