@@ -93,19 +93,26 @@ async def simulate_conversation(
         data = {
             "simulation_specification": {
                 "simulated_user_config": {
-                    "first_message": user_message,
-                    "language": "en"
+                    "prompt": {
+                        "prompt": f"You are a user testing an agent. Your first message is: {user_message}",
+                        "llm": "gpt-4o-mini",
+                        "temperature": 0.5
+                    }
                 }
             }
         }
         
-        # Add context if provided
+        # Add context to the prompt if provided
         if context:
-            data["simulation_specification"]["context"] = context
+            context_str = ", ".join([f"{k}: {v}" for k, v in context.items()])
+            data["simulation_specification"]["simulated_user_config"]["prompt"]["prompt"] = (
+                f"You are a user testing an agent with the following context: {context_str}. "
+                f"Your first message is: {user_message}"
+            )
             
-        # Add max_turns if specified
-        if max_turns != 10:  # Only include if different from default
-            data["simulation_specification"]["max_turns"] = max_turns
+        # Add new_turns_limit if max_turns is specified
+        if max_turns != 10:
+            data["new_turns_limit"] = max_turns
         
         result = await client._request(
             "POST",

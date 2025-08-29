@@ -198,36 +198,38 @@ async def create_test(
         # Transform scenarios into ElevenLabs chat_history format
         chat_history = []
         if scenarios:
-            for i, scenario in enumerate(scenarios):
+            for scenario in scenarios:
                 if isinstance(scenario, dict):
                     if "input" in scenario:
+                        # Transform user-friendly format to API format
                         chat_history.append({
                             "role": "user",
-                            "message": scenario["input"],
-                            "time_in_call_secs": i + 1
+                            "content": scenario["input"]
+                        })
+                    elif "content" in scenario and "role" in scenario:
+                        # Already in correct API format
+                        chat_history.append({
+                            "role": scenario["role"],
+                            "content": scenario["content"]
                         })
                     elif "message" in scenario:
+                        # Handle alternative message format
                         chat_history.append({
                             "role": scenario.get("role", "user"),
-                            "message": scenario["message"], 
-                            "time_in_call_secs": scenario.get("time_in_call_secs", i + 1)
+                            "content": scenario["message"]
                         })
-                    else:
-                        # If it's already in the correct format, use as-is
-                        chat_history.append(scenario)
         
         # Default chat history if none provided
         if not chat_history:
             chat_history = [{
                 "role": "user",
-                "message": "Hello",
-                "time_in_call_secs": 1
+                "content": "Hello"
             }]
         
         # Extract success condition and examples from expectations
         success_condition = "The agent should respond appropriately to the user's request"
-        success_examples = [{"response": "Appropriate helpful response", "type": "text"}]
-        failure_examples = [{"response": "Inappropriate or unhelpful response", "type": "text"}]
+        success_examples = [{"content": "Appropriate helpful response", "role": "assistant"}]
+        failure_examples = [{"content": "Inappropriate or unhelpful response", "role": "assistant"}]
         
         if expectations:
             if "success_condition" in expectations:
@@ -237,15 +239,50 @@ async def create_test(
                 success_condition = f"The agent should use the following tools: {tools}"
             
             if "success_examples" in expectations:
-                success_examples = expectations["success_examples"]
+                # Ensure success_examples are in correct format
+                success_examples = []
+                for example in expectations["success_examples"]:
+                    if isinstance(example, dict):
+                        if "content" in example and "role" in example:
+                            success_examples.append(example)
+                        elif "response" in example:
+                            success_examples.append({
+                                "content": example["response"],
+                                "role": "assistant"
+                            })
+                        else:
+                            success_examples.append({
+                                "content": str(example),
+                                "role": "assistant"
+                            })
             elif "conversation_quality" in expectations:
                 success_examples = [{
-                    "response": f"Response demonstrates {expectations['conversation_quality']}",
-                    "type": "quality_check"
+                    "content": f"Response demonstrates {expectations['conversation_quality']}",
+                    "role": "assistant"
                 }]
             
             if "failure_examples" in expectations:
-                failure_examples = expectations["failure_examples"]
+                # Ensure failure_examples are in correct format
+                failure_examples = []
+                for example in expectations["failure_examples"]:
+                    if isinstance(example, dict):
+                        if "content" in example and "role" in example:
+                            failure_examples.append(example)
+                        elif "response" in example:
+                            failure_examples.append({
+                                "content": example["response"],
+                                "role": "assistant"
+                            })
+                        else:
+                            failure_examples.append({
+                                "content": str(example),
+                                "role": "assistant"
+                            })
+                    else:
+                        failure_examples.append({
+                            "content": str(example),
+                            "role": "assistant"
+                        })
         
         # Build payload according to ElevenLabs API docs
         data = {
