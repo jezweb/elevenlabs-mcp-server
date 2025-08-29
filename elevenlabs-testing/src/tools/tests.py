@@ -198,68 +198,92 @@ async def create_test(
         chat_history = []
         if scenarios:
             time_counter = 1
-            for scenario in scenarios:
+            for i, scenario in enumerate(scenarios):
                 if isinstance(scenario, dict):
-                    # For test creation, we only need role and time_in_call_secs
+                    # Create user message
                     chat_history.append({
-                        "role": scenario.get("role", "user"),
-                        "time_in_call_secs": scenario.get("time_in_call_secs", time_counter)
+                        "role": "user",
+                        "time_in_call_secs": time_counter
                     })
-                    # Add agent response placeholder if expected
-                    if scenario.get("expected"):
-                        time_counter += 1
-                        chat_history.append({
-                            "role": "assistant",
-                            "time_in_call_secs": time_counter
-                        })
-                    time_counter += 1
+                    time_counter += 2  # Leave gap for response time
+                    
+                    # Add assistant response (always add for conversation flow)
+                    chat_history.append({
+                        "role": "assistant", 
+                        "time_in_call_secs": time_counter
+                    })
+                    time_counter += 2  # Gap before next turn
         
-        # Default chat history if none provided
+        # Default minimal chat history if none provided
         if not chat_history:
-            chat_history = [{
-                "role": "user",
-                "time_in_call_secs": 1
-            }]
+            chat_history = [
+                {"role": "user", "time_in_call_secs": 1},
+                {"role": "assistant", "time_in_call_secs": 2}
+            ]
         
         # Extract success condition and examples from expectations
-        success_condition = "The agent should respond appropriately to the user's request"
-        # NOTE: Examples ONLY have "response" field, not content/role!
-        success_examples = [{"response": "Appropriate helpful response"}]
-        failure_examples = [{"response": "Inappropriate or unhelpful response"}]
+        # Generate appropriate defaults based on test type
+        if test_type == "tool":
+            success_condition = "The agent should use the appropriate tools to handle the user's request"
+            success_examples = [
+                {"response": "I've checked availability and found an opening. Let me book that for you."},
+                {"response": "I'll look up that information in our system right away."}
+            ]
+            failure_examples = [
+                {"response": "I don't have access to that information."},
+                {"response": "I cannot help with bookings."}
+            ]
+        elif test_type == "conversation":
+            success_condition = "The agent should have a natural, helpful conversation with the user"
+            success_examples = [
+                {"response": "Hello! I'd be happy to help you with that."},
+                {"response": "Sure, I can assist you with your request."}
+            ]
+            failure_examples = [
+                {"response": "Error: Invalid input"},
+                {"response": "I don't understand"}
+            ]
+        else:  # integration
+            success_condition = "The agent should properly integrate with external systems"
+            success_examples = [
+                {"response": "Successfully connected to the external service."},
+                {"response": "I've retrieved the information from our database."}
+            ]
+            failure_examples = [
+                {"response": "Failed to connect to external service"},
+                {"response": "Integration error occurred"}
+            ]
         
         if expectations:
+            # Override success_condition if provided
             if "success_condition" in expectations:
                 success_condition = expectations["success_condition"]
             elif "must_use_tools" in expectations:
                 tools = ", ".join(expectations["must_use_tools"])
-                success_condition = f"The agent should use the following tools: {tools}"
+                success_condition = f"The agent must use these specific tools in order: {tools}. The agent should handle the conversation naturally while ensuring all required tools are called."
+            elif "conversation_quality" in expectations:
+                quality = expectations["conversation_quality"]
+                success_condition = f"The agent should maintain a {quality} conversation style while helping the user"
             
+            # Use provided examples if available
             if "success_examples" in expectations:
-                # Ensure success_examples are in correct format (only "response" field)
                 success_examples = []
                 for example in expectations["success_examples"]:
                     if isinstance(example, dict):
                         if "response" in example:
                             success_examples.append({"response": example["response"]})
                         else:
-                            # Convert any format to response-only format
                             success_examples.append({"response": str(example.get("content", example))})
                     else:
                         success_examples.append({"response": str(example)})
-            elif "conversation_quality" in expectations:
-                success_examples = [{
-                    "response": f"Response demonstrates {expectations['conversation_quality']}"
-                }]
             
             if "failure_examples" in expectations:
-                # Ensure failure_examples are in correct format (only "response" field)
                 failure_examples = []
                 for example in expectations["failure_examples"]:
                     if isinstance(example, dict):
                         if "response" in example:
                             failure_examples.append({"response": example["response"]})
                         else:
-                            # Convert any format to response-only format
                             failure_examples.append({"response": str(example.get("content", example))})
                     else:
                         failure_examples.append({"response": str(example)})
@@ -274,6 +298,7 @@ async def create_test(
         }
         
         # Add optional parameters from expectations
+        # Only add API-supported fields
         if expectations:
             # Allow tool_call_parameters to be passed directly in expectations
             if "tool_call_parameters" in expectations:
@@ -281,6 +306,14 @@ async def create_test(
             # Allow dynamic_variables to be passed directly in expectations
             if "dynamic_variables" in expectations:
                 data["dynamic_variables"] = expectations["dynamic_variables"]
+            
+            # For tool tests with must_use_tools, add tool_call_parameters if not already set
+            if test_type == "tool" and "must_use_tools" in expectations and "tool_call_parameters" not in data:
+                # Only add if tools were specified but no explicit parameters were given
+                data["tool_call_parameters"] = {
+                    "required_tools": expectations["must_use_tools"],
+                    "evaluation_mode": "flexible"  # Use flexible mode by default
+                }
         
         result = await client._request(
             "POST",
