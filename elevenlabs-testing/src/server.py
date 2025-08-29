@@ -178,8 +178,7 @@ async def create_test_tool(
     agent_id: str,
     test_type: Literal["conversation", "tool", "integration"] = "conversation",
     scenarios: List[Dict[str, Any]] = None,
-    expectations: Dict[str, Any] = None,
-    metadata: Optional[Dict] = None
+    expectations: Dict[str, Any] = None
 ) -> Dict[str, Any]:
     """
     Create a new test scenario for agent validation.
@@ -225,22 +224,19 @@ async def create_test_tool(
             - conversation_quality: str - e.g., "natural_flow", "professional"
             - privacy_compliance: bool - whether to check privacy
             - success_condition: str - custom success evaluation prompt
+            - tool_call_parameters: Dict - for advanced tool testing config
+            - dynamic_variables: Dict - for runtime variable substitution
             
             Examples:
                 {"must_use_tools": ["list_appointments", "create_client"]}
                 {"conversation_quality": "natural_flow", "privacy_compliance": true}
-                
-        metadata: Additional metadata (Optional[Dict])
-            IMPORTANT: Pass as a dictionary, NOT a JSON string!
-            
-            ✓ CORRECT: metadata={"category": "booking", "priority": "high"}
-            ✗ WRONG:   metadata='{"category": "booking"}'  # Don't pass as string
-            
-            Common keys:
-            - category: Test category (str)
-            - priority: Test priority (str) - "high", "medium", "low"
-            - tags: List of tags (List[str])
-            - description: Detailed description (str)
+                {
+                    "must_use_tools": ["list_appointments"],
+                    "tool_call_parameters": {
+                        "required_tools": ["list_appointments"],
+                        "evaluation_mode": "strict"
+                    }
+                }
     
     Returns:
         Dict with created test details and test_id
@@ -263,17 +259,17 @@ async def create_test_tool(
             ],
             expectations={  # Dict, not JSON string!
                 "must_use_tools": ["list_appointments", "create_booking"],
-                "conversation_quality": "professional"
-            },
-            metadata={  # Dict, not JSON string!
-                "category": "booking",
-                "priority": "high"
+                "conversation_quality": "professional",
+                "tool_call_parameters": {
+                    "required_tools": ["list_appointments", "create_booking"],
+                    "evaluation_mode": "strict"
+                }
             }
         )
     
     API Endpoint: POST /convai/agent-testing/create
     """
-    return await create_test(client, name, agent_id, test_type, scenarios, expectations, metadata)
+    return await create_test(client, name, agent_id, test_type, scenarios, expectations)
 
 
 @mcp.tool()
@@ -281,8 +277,7 @@ async def update_test_tool(
     test_id: str,
     name: Optional[str] = None,
     scenarios: Optional[List[Dict]] = None,
-    expectations: Optional[Dict] = None,
-    metadata: Optional[Dict] = None
+    expectations: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """
     Update existing test scenario configuration.
@@ -322,18 +317,8 @@ async def update_test_tool(
             - conversation_quality: str
             - privacy_compliance: bool
             - success_condition: str
-            
-        metadata: Updated metadata (Optional[Dict])
-            IMPORTANT: Pass as a dictionary, NOT a JSON string!
-            
-            ✓ CORRECT: metadata={"priority": "urgent"}
-            ✗ WRONG:   metadata='{"priority": "urgent"}'  # Don't pass as string
-            
-            Same keys as create_test_tool:
-            - category: str
-            - priority: str
-            - tags: List[str]
-            - description: str
+            - tool_call_parameters: Dict
+            - dynamic_variables: Dict
     
     Returns:
         Dict with updated test configuration
@@ -362,7 +347,7 @@ async def update_test_tool(
     
     Note: Only provided fields are updated. Omitted fields remain unchanged.
     """
-    return await update_test(client, test_id, name, scenarios, expectations, metadata)
+    return await update_test(client, test_id, name, scenarios, expectations)
 
 
 @mcp.tool()

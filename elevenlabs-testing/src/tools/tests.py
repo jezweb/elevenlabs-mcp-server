@@ -149,8 +149,7 @@ async def create_test(
     agent_id: str,
     test_type: Literal["conversation", "tool", "integration"] = "conversation",
     scenarios: List[Dict[str, Any]] = None,
-    expectations: Dict[str, Any] = None,
-    metadata: Optional[Dict] = None
+    expectations: Dict[str, Any] = None
 ) -> Dict[str, Any]:
     """
     Create a new test scenario for agent validation.
@@ -164,7 +163,6 @@ async def create_test(
             - "integration": Test external integrations
         scenarios: Test conversation flows (list of interaction steps)
         expectations: Expected outcomes (response patterns, behaviors)
-        metadata: Additional metadata (tags, priority, etc.)
     
     Returns:
         Created test with ID and configuration
@@ -275,19 +273,14 @@ async def create_test(
             "failure_examples": failure_examples
         }
         
-        # Add optional parameters from metadata
-        if metadata:
-            if "tool_call_parameters" in metadata:
-                data["tool_call_parameters"] = metadata["tool_call_parameters"]
-            if "dynamic_variables" in metadata:
-                data["dynamic_variables"] = metadata["dynamic_variables"]
-        
-        # Add tool evaluation for tool tests
-        if test_type == "tool" and expectations and "must_use_tools" in expectations:
-            data["tool_call_parameters"] = {
-                "required_tools": expectations["must_use_tools"],
-                "evaluation_mode": "strict"
-            }
+        # Add optional parameters from expectations
+        if expectations:
+            # Allow tool_call_parameters to be passed directly in expectations
+            if "tool_call_parameters" in expectations:
+                data["tool_call_parameters"] = expectations["tool_call_parameters"]
+            # Allow dynamic_variables to be passed directly in expectations
+            if "dynamic_variables" in expectations:
+                data["dynamic_variables"] = expectations["dynamic_variables"]
         
         result = await client._request(
             "POST",
@@ -325,8 +318,7 @@ async def update_test(
     test_id: str,
     name: Optional[str] = None,
     scenarios: Optional[List[Dict]] = None,
-    expectations: Optional[Dict] = None,
-    metadata: Optional[Dict] = None
+    expectations: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """
     Update existing test scenario configuration.
@@ -336,7 +328,6 @@ async def update_test(
         name: New test name (optional)
         scenarios: Updated test flows (optional)
         expectations: Updated expected outcomes (optional)
-        metadata: Updated metadata (optional)
     
     Returns:
         Updated test configuration
@@ -375,8 +366,6 @@ async def update_test(
             data["scenarios"] = scenarios
         if expectations is not None:
             data["expectations"] = expectations
-        if metadata is not None:
-            data["metadata"] = metadata
         
         result = await client._request(
             "PUT",
