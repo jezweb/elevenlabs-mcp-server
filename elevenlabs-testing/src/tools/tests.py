@@ -195,41 +195,39 @@ async def create_test(
         )
     
     try:
-        # Transform scenarios into ElevenLabs chat_history format
+        # Transform scenarios into ElevenLabs chat_history format for test creation
+        # NOTE: Test creation chat_history ONLY has role and time_in_call_secs, no message/content!
         chat_history = []
         if scenarios:
+            time_counter = 1
             for scenario in scenarios:
                 if isinstance(scenario, dict):
-                    if "input" in scenario:
-                        # Transform user-friendly format to API format
+                    # For test creation, we only need role and time_in_call_secs
+                    chat_history.append({
+                        "role": scenario.get("role", "user"),
+                        "time_in_call_secs": scenario.get("time_in_call_secs", time_counter)
+                    })
+                    # Add agent response placeholder if expected
+                    if scenario.get("expected"):
+                        time_counter += 1
                         chat_history.append({
-                            "role": "user",
-                            "content": scenario["input"]
+                            "role": "assistant",
+                            "time_in_call_secs": time_counter
                         })
-                    elif "content" in scenario and "role" in scenario:
-                        # Already in correct API format
-                        chat_history.append({
-                            "role": scenario["role"],
-                            "content": scenario["content"]
-                        })
-                    elif "message" in scenario:
-                        # Handle alternative message format
-                        chat_history.append({
-                            "role": scenario.get("role", "user"),
-                            "content": scenario["message"]
-                        })
+                    time_counter += 1
         
         # Default chat history if none provided
         if not chat_history:
             chat_history = [{
                 "role": "user",
-                "content": "Hello"
+                "time_in_call_secs": 1
             }]
         
         # Extract success condition and examples from expectations
         success_condition = "The agent should respond appropriately to the user's request"
-        success_examples = [{"content": "Appropriate helpful response", "role": "assistant"}]
-        failure_examples = [{"content": "Inappropriate or unhelpful response", "role": "assistant"}]
+        # NOTE: Examples ONLY have "response" field, not content/role!
+        success_examples = [{"response": "Appropriate helpful response"}]
+        failure_examples = [{"response": "Inappropriate or unhelpful response"}]
         
         if expectations:
             if "success_condition" in expectations:
@@ -239,50 +237,34 @@ async def create_test(
                 success_condition = f"The agent should use the following tools: {tools}"
             
             if "success_examples" in expectations:
-                # Ensure success_examples are in correct format
+                # Ensure success_examples are in correct format (only "response" field)
                 success_examples = []
                 for example in expectations["success_examples"]:
                     if isinstance(example, dict):
-                        if "content" in example and "role" in example:
-                            success_examples.append(example)
-                        elif "response" in example:
-                            success_examples.append({
-                                "content": example["response"],
-                                "role": "assistant"
-                            })
+                        if "response" in example:
+                            success_examples.append({"response": example["response"]})
                         else:
-                            success_examples.append({
-                                "content": str(example),
-                                "role": "assistant"
-                            })
+                            # Convert any format to response-only format
+                            success_examples.append({"response": str(example.get("content", example))})
+                    else:
+                        success_examples.append({"response": str(example)})
             elif "conversation_quality" in expectations:
                 success_examples = [{
-                    "content": f"Response demonstrates {expectations['conversation_quality']}",
-                    "role": "assistant"
+                    "response": f"Response demonstrates {expectations['conversation_quality']}"
                 }]
             
             if "failure_examples" in expectations:
-                # Ensure failure_examples are in correct format
+                # Ensure failure_examples are in correct format (only "response" field)
                 failure_examples = []
                 for example in expectations["failure_examples"]:
                     if isinstance(example, dict):
-                        if "content" in example and "role" in example:
-                            failure_examples.append(example)
-                        elif "response" in example:
-                            failure_examples.append({
-                                "content": example["response"],
-                                "role": "assistant"
-                            })
+                        if "response" in example:
+                            failure_examples.append({"response": example["response"]})
                         else:
-                            failure_examples.append({
-                                "content": str(example),
-                                "role": "assistant"
-                            })
+                            # Convert any format to response-only format
+                            failure_examples.append({"response": str(example.get("content", example))})
                     else:
-                        failure_examples.append({
-                            "content": str(example),
-                            "role": "assistant"
-                        })
+                        failure_examples.append({"response": str(example)})
         
         # Build payload according to ElevenLabs API docs
         data = {
