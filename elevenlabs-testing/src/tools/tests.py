@@ -177,7 +177,7 @@ async def create_test(
             scenarios=[{"input": "Hello", "expected": "greeting"}]
         )
     
-    API Endpoint: POST /convai/tests
+    API Endpoint: POST /convai/agent-testing/create
     """
     from src.utils import format_error, format_success, validate_elevenlabs_id
     
@@ -195,33 +195,80 @@ async def create_test(
         )
     
     try:
+        # Transform scenarios into ElevenLabs chat_history format
+        chat_history = []
+        if scenarios:
+            for i, scenario in enumerate(scenarios):
+                if isinstance(scenario, dict):
+                    if "input" in scenario:
+                        chat_history.append({
+                            "role": "user",
+                            "message": scenario["input"],
+                            "time_in_call_secs": i + 1
+                        })
+                    elif "message" in scenario:
+                        chat_history.append({
+                            "role": scenario.get("role", "user"),
+                            "message": scenario["message"], 
+                            "time_in_call_secs": scenario.get("time_in_call_secs", i + 1)
+                        })
+                    else:
+                        # If it's already in the correct format, use as-is
+                        chat_history.append(scenario)
+        
+        # Default chat history if none provided
+        if not chat_history:
+            chat_history = [{
+                "role": "user",
+                "message": "Hello",
+                "time_in_call_secs": 1
+            }]
+        
+        # Extract success condition and examples from expectations
+        success_condition = "The agent should respond appropriately to the user's request"
+        success_examples = [{"response": "Appropriate helpful response", "type": "text"}]
+        failure_examples = [{"response": "Inappropriate or unhelpful response", "type": "text"}]
+        
+        if expectations:
+            if "success_condition" in expectations:
+                success_condition = expectations["success_condition"]
+            elif "must_use_tools" in expectations:
+                tools = ", ".join(expectations["must_use_tools"])
+                success_condition = f"The agent should use the following tools: {tools}"
+            
+            if "success_examples" in expectations:
+                success_examples = expectations["success_examples"]
+            elif "conversation_quality" in expectations:
+                success_examples = [{
+                    "response": f"Response demonstrates {expectations['conversation_quality']}",
+                    "type": "quality_check"
+                }]
+            
+            if "failure_examples" in expectations:
+                failure_examples = expectations["failure_examples"]
+        
         # Build payload according to ElevenLabs API docs
         data = {
             "name": name,
-            "chat_history": scenarios or [
-                {
-                    "role": "user",  
-                    "time_in_call_secs": 1
-                }
-            ],
-            "success_condition": expectations.get("success_condition", "string") if expectations else "string",
-            "success_examples": expectations.get("success_examples", [
-                {
-                    "response": "string",
-                    "type": "string"
-                }
-            ]) if expectations else [{"response": "string", "type": "string"}],
-            "failure_examples": expectations.get("failure_examples", [
-                {
-                    "response": "string", 
-                    "type": "string"
-                }
-            ]) if expectations else [{"response": "string", "type": "string"}]
+            "chat_history": chat_history,
+            "success_condition": success_condition,
+            "success_examples": success_examples,
+            "failure_examples": failure_examples
         }
         
-        # Add optional parameters if provided
+        # Add optional parameters from metadata
         if metadata:
-            data.update(metadata)
+            if "tool_call_parameters" in metadata:
+                data["tool_call_parameters"] = metadata["tool_call_parameters"]
+            if "dynamic_variables" in metadata:
+                data["dynamic_variables"] = metadata["dynamic_variables"]
+        
+        # Add tool evaluation for tool tests
+        if test_type == "tool" and expectations and "must_use_tools" in expectations:
+            data["tool_call_parameters"] = {
+                "required_tools": expectations["must_use_tools"],
+                "evaluation_mode": "strict"
+            }
         
         result = await client._request(
             "POST",
@@ -231,12 +278,27 @@ async def create_test(
         
         return format_success(
             f"Created test scenario '{name}'",
-            {"test": result}
+            {"test": result, "test_id": result.get("id")}
         )
         
     except Exception as e:
         logger.error(f"Failed to create test: {e}")
-        return format_error(str(e))
+        error_msg = str(e)
+        
+        # Provide specific suggestions based on error
+        if "422" in error_msg:
+            if "chat_history" in error_msg:
+                suggestion = "Check that scenarios contain valid conversation messages"
+            elif "success_condition" in error_msg:
+                suggestion = "Ensure success_condition is a clear evaluation prompt"
+            elif "examples" in error_msg:
+                suggestion = "Check that success/failure examples have valid response and type fields"
+            else:
+                suggestion = "Check that all required fields are provided with correct data types"
+        else:
+            suggestion = "Check API key and agent_id validity"
+            
+        return format_error(error_msg, suggestion)
 
 
 async def update_test(
