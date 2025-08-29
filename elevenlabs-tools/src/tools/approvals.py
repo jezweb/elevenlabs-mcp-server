@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 async def update_approval_policy(
     client,
     server_id: str,
-    policy: Literal["always_ask", "fine_grained", "no_approval"]
+    policy: Literal["auto_approve_all", "require_approval_all", "require_approval_per_tool"]
 ) -> Dict[str, Any]:
     """
     Set tool approval policy.
@@ -21,6 +21,9 @@ async def update_approval_policy(
     Args:
         server_id: MCP server ID
         policy: Approval policy
+            - "auto_approve_all": Auto-approve all tools
+            - "require_approval_all": Require approval for all tools
+            - "require_approval_per_tool": Configure approval per tool
     
     Returns:
         Updated policy configuration
@@ -34,7 +37,7 @@ async def update_approval_policy(
         result = await client._request(
             "PATCH",
             f"/convai/mcp-servers/{server_id}/approval-policy",
-            json_data={"policy": policy}
+            json_data={"approval_policy": policy}  # Changed from "policy" to "approval_policy"
         )
         
         return format_success(

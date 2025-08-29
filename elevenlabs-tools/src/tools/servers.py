@@ -69,6 +69,36 @@ async def create_mcp_server(
         return format_error(str(e))
 
 
+async def list_mcp_servers(
+    client
+) -> Dict[str, Any]:
+    """
+    List all MCP servers in the workspace.
+    
+    Returns:
+        List of MCP server configurations
+    """
+    from src.utils import format_error, format_success
+    
+    try:
+        result = await client._request(
+            "GET",
+            "/convai/mcp-servers",
+            use_cache=True
+        )
+        
+        servers = result if isinstance(result, list) else []
+        
+        return format_success(
+            f"Found {len(servers)} MCP servers",
+            {"servers": servers, "count": len(servers)}
+        )
+        
+    except Exception as e:
+        logger.error(f"Failed to list MCP servers: {e}")
+        return format_error(str(e))
+
+
 async def get_mcp_server(
     client,
     server_id: str
