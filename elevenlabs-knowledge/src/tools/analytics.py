@@ -60,7 +60,7 @@ async def get_knowledge_base_size(client, agent_id: str) -> Dict[str, Any]:
         )
     
     try:
-        result = await client._request("GET", f"/convai/agent/{agent_id}/knowledge-base/size")
+        result = await client._request("GET", f"/convai/agents/{agent_id}/knowledge-base/size")
         return format_success(
             "Knowledge base statistics retrieved",
             {"statistics": result}
